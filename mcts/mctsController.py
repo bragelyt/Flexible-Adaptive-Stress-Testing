@@ -1,17 +1,15 @@
 import random, math, json
 
-from datetime import datetime, time
-from typing import Dict, List
-from typing_extensions import runtime
-from IPython.core.pylabtools import figsize
+from datetime import datetime
+from typing import Dict
 
 import matplotlib.pyplot as plt
-import numpy as np
 import seaborn as sn
 
 from mcts.treeNode import TreeNode
 from sim.simInterface import SimInterface
-from sim.simpleBoatController import SimpleBoatController
+
+# TODO: This class should be replaced by mcts and mctsHandler
 
 class MCTSController:
 
