@@ -8,8 +8,15 @@ class TreeNode:
         self.parrent = parent
         self.isTerminal = False
         # self.cumD = None  # REVIEW: When can cumulative distance be passed in? Nodes are allways built after parrents. Might be possible to pass in at first backprop, but messy.
+        
+        # ---------- Stats --------- #
         self.timesVisited = 0  # Initiates only after visit so should be one
         self.evaluation = 0
+        if self.action == None:
+            self.transProb = 1
+        else:
+            self.evaluation = 0
+
         self.children : Dict[int, TreeNode] = {}
         # self.childrenVisits : Dict[tuple, int] = {}  # ChildNodeState, nrOfVisits  # TODO: Change childNodeState to treeNode
         # self.childrenEvaluations : Dict[tuple, tuple] = {}
@@ -23,12 +30,13 @@ class TreeNode:
     def add_child(self, newBornAction):
         if newBornAction not in self.children.keys():  # REVIEW: Sloppy fix for randomness in seed generation. If exact same seed generated before, a child is not added.
             self.children[newBornAction] = TreeNode(newBornAction, self)  # NOTE This is the backbone of the tree structure
+        return self.children[newBornAction]
     
     def UCTselect(self):  # Tree policy. "Bandit based Monte-Carlo Planning", Kocsis and Szepervari (2006)
         # NOTE: This is left without a check for if children are empty. Should resolve itself through prog widening but might fuck up
         maxValue = -math.inf
         bestChild : TreeNode = None
-        for child in self.children:
+        for child in self.children.values():
             x = child.evaluation + self.explorationCoefficient*(math.sqrt(math.log(self.timesVisited)/(1+child.timesVisited)))
             if x > maxValue:
                 bestChild = child

@@ -44,9 +44,17 @@ class SimpleBoatController:
         self.steerable_angle += action*math.pi/100
         self._next_state()
         self.is_endstate()
-        e = self.collision_happened
-        d = self.closest_boat_distance
-        return(e, d)
+        # e = self.collision_happened
+        # d = self.closest_boat_distance
+        # return(e, d)
+
+    def terminal_stats(self):
+        if self.sim_in_endstate:
+            e = self.collision_happened
+            d = self.closest_boat_distance
+            return(e, d)
+        else:
+            print("Cant get terminal reward when sim is not in endstate")
 
     def is_endstate(self):
         if self.sim_in_endstate != True:

@@ -1,21 +1,40 @@
 from sim.simInterface import SimInterface
+from mcts.mcts import MCTS
 
 class MCTSHandler:
 
-    # Handler should talk with MCTS and simInterfac, passing actions and rewards between the two parts.
-    # At a later date different handlers could be built using the same MCTS logic. NOTE: This might meen rollout should be passed out.
+    #TODO: Add funcitons for rerooting tree at most promising node. (Start wiht simple UCT and no exploration?)
 
     def __init__(self) -> None:
-        pass
+        
+        self.mcts = MCTS()
+        self.sim = SimInterface()
+        for i in range(6000):
+            if i%500 == 0:
+                print(i)
+            self.loop()
+    
+    def loop(self):
+        terminal = False
+        #  Selection and progressive widening  #
+        while not self.mcts.isAtLeafNode():
+            actionSeed = self.mcts.selectNextNode()
+            p = self.sim.step(actionSeed)
+            if self.sim.is_terminal():
+                self.mcts.setCurrentNodeTerminal()
+        self.mcts.setTransitionProbability(p)
 
-    def reward(self, actionSeed):
-        reward = self.simIntefrace.step(actionSeed)
-        terminal = self.simIntefrace.is_terminal()
-        e = self.simIntefrace.is_failure_episode()
-        if terminal:
-            state = self.simIntefrace.get_state()
-            self.endStates.append(state)
-            if e:
-                self.crashStates.append(tuple(state))
-            return reward
-        return reward + self.rollout()
+        # --------- Rollout -------- #
+        rolloutTransProb = 0
+        while not terminal:
+            actionSeed = self.mcts.rollout()
+            rolloutTransProb += self.sim.step(actionSeed)
+            terminal = self.sim.is_terminal()
+
+        # ------ Backpropagate ----- #
+        terminalReward = self.sim.terminal_reward()
+        totalReward = self.mcts.backpropagate(terminalReward + rolloutTransProb)
+        self.mcts.setAtRoot()
+        actionTrace = self.sim.get_state()
+        self.sim.reset_sim()
+        return (totalReward, actionTrace)
