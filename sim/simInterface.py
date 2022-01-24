@@ -18,14 +18,22 @@ class SimInterface:
         self.sim_in_endstate : bool = False
         self.lastActionSeed = None
 
-    def step(self, actionSeed) -> Tuple:  # return reward
+    def step(self, actionSeed):  # return reward
         action = self._get_action_from_seed(actionSeed)
         p = self._get_transition_probability(actionSeed)
-        e, d = self.simWorld.execute_action(action)
+        self.simWorld.execute_action(action)
         self.actionTrace.append(actionSeed)
         self.sim_in_endstate = self.simWorld.is_endstate()
         self.lastActionSeed = actionSeed
-        return self.reward(p, e, d, self.sim_in_endstate)
+        return math.log(p)
+        #return self.reward(p, e, d, self.sim_in_endstate)
+
+    def terminal_reward(self):
+        e, d = self.simWorld.terminal_stats()
+        if e:
+            return self.collision_reward
+        else:
+            return -d
 
     def is_terminal(self) -> bool:
         return self.sim_in_endstate
@@ -47,18 +55,18 @@ class SimInterface:
         self.lastActionSeed = None
         self.simWorld.reset_sim()
 
-    def reward(self, # Reward function.
-        p,  # Transition probability
-        e,  # An episode accured (e.g. boats crashed or NMAC)
-        d,  # Closest distance between the boats throughout the simulation
-        terminal):  # Simulation has terminated
-        if terminal:
-            if e:
-                return self.collision_reward
-            else:
-                return -d
-        else:
-            return math.log(p)
+    # def reward(self, # Reward function.
+    #     p,  # Transition probability
+    #     e,  # An episode accured (e.g. boats crashed or NMAC)
+    #     d,  # Closest distance between the boats throughout the simulation
+    #     terminal):  # Simulation has terminated
+    #     if terminal:
+    #         if e:
+    #             return self.collision_reward
+    #         else:
+    #             return -d
+    #     else:
+    #         return math.log(p)
 
     def plot(self) -> None:
         self.simWorld.plot(self._generate_action_trace(self.actionTrace))
