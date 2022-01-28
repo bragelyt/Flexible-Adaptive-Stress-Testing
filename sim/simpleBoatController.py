@@ -1,6 +1,5 @@
 import math, json, copy
 
-import matplotlib.pyplot as plt
 
 #TODO: Messy simulation. Should be cleaned up.
 #
@@ -27,81 +26,66 @@ class SimpleBoatController:
         self.steplength = params["steplength"]
         self.crash_distance_threshold = params["crash_distance_threshold"]
         self.action_range = params["action_range"]
-        self.reset_sim()
+        self.resetSim()
     
 
-    def reset_sim(self):
+    def resetSim(self):
         with open("parameters.json") as f:
             params = json.load(f)
-        self.straight_pos = params["straight_pos"]
-        self.steerable_pos = params["steerable_pos"]
-        self.steerable_angle = 0
-        self.collision_happened = False
-        self.sim_in_endstate = False
-        self.closest_boat_distance = self._get_current_distance()
+        self.straightPos = params["straight_pos"]
+        self.steerablePos = params["steerable_pos"]
+        self.steerableangle = 0
+        self.collisionHappened = False
+        self.simInEndstate = False
+        self.closestBoatDistance = self._getCurrentDistance()
             
-    def execute_action(self, action: float):  # Action should be scaled by actionIntefrace.
-        self.steerable_angle += action*math.pi/100
-        self._next_state()
-        self.is_endstate()
-        e = self.collision_happened
-        d = self.closest_boat_distance
-        return(e, d)
+    def executeAction(self, action: float):  # Action should be scaled by actionIntefrace.
+        self.steerableangle += action*math.pi/100
+        self._nextState()
+        self.isEndstate()
 
-    def is_endstate(self):
-        if self.sim_in_endstate != True:
-            if self.closest_boat_distance < self.crash_distance_threshold:
-                self.collision_happened = True
-                self.sim_in_endstate = True
-            elif self.straight_pos[0] > 100:
-                self.sim_in_endstate = True
-        return self.sim_in_endstate
+    def terminalStats(self):
+        if self.simInEndstate:
+            e = self.collisionHappened
+            d = self.closestBoatDistance
+            return(e, d)
+        else:
+            print("Cant get terminal reward when sim is not in endstate")
+
+    def isEndstate(self):
+        if self.simInEndstate != True:
+            if self.closestBoatDistance < self.crash_distance_threshold:
+                self.collisionHappened = True
+                self.simInEndstate = True
+            elif self.straightPos[0] > 100:
+                self.simInEndstate = True
+        return self.simInEndstate
+
+    def _nextState(self):
+        self.steerablePos[0] += math.sin(self.steerableangle)*self.steplength
+        self.steerablePos[1] += math.cos(self.steerableangle)*self.steplength
+        self.straightPos[0] += self.steplength
+        self._updateClosestDistance()
     
-    def plot(self, action_trace):
-        steerable_pos_trace, straight_pos_trace = self._get_position_trace(action_trace)
-        cdt = self.crash_distance_threshold
-        colors = {8*cdt: "gray", 4*cdt: "yellow", 2*cdt: "red", cdt: "black"}
-        for i in range(len(steerable_pos_trace)):
-            steerable_pos = steerable_pos_trace[i]
-            straight_pos = straight_pos_trace[i]
-            distance = self._boat_distance(steerable_pos, straight_pos)
-            color = "blue"
-            for key, _color in colors.items():
-                if distance > key:
-                    color = _color
-                    break
-            plt.plot([steerable_pos[0], straight_pos[0]], [steerable_pos[1], straight_pos[1]], c = "#F0F0F0", zorder=0)
-            plt.scatter(steerable_pos[0], steerable_pos[1], c = color, zorder=10)
-            plt.scatter(straight_pos[0], straight_pos[1], c = color, zorder=10)
-        plt.ylim(-10, 110)
-        plt.xlim(-10, 110)
-        plt.show()
+    def _getCurrentDistance(self):
+        return self._boatDistance(self.steerablePos, self.straightPos)
 
-    def _next_state(self):
-        self.steerable_pos[0] += math.sin(self.steerable_angle)*self.steplength
-        self.steerable_pos[1] += math.cos(self.steerable_angle)*self.steplength
-        self.straight_pos[0] += self.steplength
-        self._update_closest_distance()
-    
-    def _get_current_distance(self):
-        return self._boat_distance(self.steerable_pos, self.straight_pos)
-
-    def _boat_distance(self, pos1, pos2):
+    def _boatDistance(self, pos1, pos2):
         return math.sqrt((pos1[0]-pos2[0])**2 + (pos1[1]-pos2[1])**2)
 
-    def _update_closest_distance(self):
-        distance = self._get_current_distance()
-        if distance < self.closest_boat_distance:
-            self.closest_boat_distance = distance
+    def _updateClosestDistance(self):
+        distance = self._getCurrentDistance()
+        if distance < self.closestBoatDistance:
+            self.closestBoatDistance = distance
 
-    def _get_position_trace(self, action_trace):  # Prev pos is not stored, so sim is reset, and fast forwarded through
-        self.reset_sim()
-        steerable_state = []
-        straight_state = []
-        for action in action_trace:
-            steerable_state.append(copy.copy(self.steerable_pos))
-            straight_state.append(copy.copy(self.straight_pos))
-            self.execute_action(action)
-        steerable_state.append(copy.copy(self.steerable_pos))
-        straight_state.append(copy.copy(self.straight_pos))
-        return steerable_state, straight_state
+    def _getPositionTrace(self, actionTrace):  # Prev pos is not stored, so sim is reset, and fast forwarded through
+        self.resetSim()
+        steerableState = []
+        straightState = []
+        for action in actionTrace:
+            steerableState.append(copy.copy(self.steerablePos))
+            straightState.append(copy.copy(self.straightPos))
+            self.executeAction(action)
+        steerableState.append(copy.copy(self.steerablePos))
+        straightState.append(copy.copy(self.straightPos))
+        return steerableState, straightState
