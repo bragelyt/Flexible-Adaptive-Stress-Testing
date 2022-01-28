@@ -10,78 +10,70 @@ class SimInterface:
         self.simWorld = SimpleBoatController()
         with open("parameters.json") as f:
             params = json.load(f)
-        action_range = params["action_range"]
-        self.collision_reward = params["collision_reward"]
-        self.totalRange = action_range[1] - action_range[0]
-        self.minAction = action_range[0]
-        self.actionTrace : List(float) = []
-        self.sim_in_endstate : bool = False
+        actionRange = params["action_range"]
+        self.collisionReward = params["collision_reward"]
+        self.totalRange = actionRange[1] - actionRange[0]
+        self.minAction = actionRange[0]
+        self.actionSeedTrace : List(float) = []
+        self.simInEndstate : bool = False
         self.lastActionSeed = None
 
-    def step(self, actionSeed):  # return reward
-        action = self._get_action_from_seed(actionSeed)
-        p = self._get_transition_probability(actionSeed)
-        self.simWorld.execute_action(action)
-        self.actionTrace.append(actionSeed)
-        self.sim_in_endstate = self.simWorld.is_endstate()
+    def step(self, actionSeed):  # Return step reward (e.g. transition probability)
+        action = self._getActionFromSeed(actionSeed)
+        p = self._getTransitionProbability(actionSeed)
+        self.simWorld.executeAction(action)
+        self.actionSeedTrace.append(actionSeed)
+        self.simInEndstate = self.simWorld.isEndstate()
         self.lastActionSeed = actionSeed
         return math.log(p)
-        #return self.reward(p, e, d, self.sim_in_endstate)
 
-    def terminal_reward(self):
-        e, d = self.simWorld.terminal_stats()
+    def terminalReward(self):
+        e, d = self.simWorld.terminalStats()
         if e:
-            return self.collision_reward
+            return self.collisionReward
         else:
             return -d
 
-    def is_terminal(self) -> bool:
-        return self.sim_in_endstate
+    def isTerminal(self) -> bool:
+        return self.simInEndstate
 
-    def is_failure_episode(self) -> bool:
-        return self.simWorld.collision_happened
+    def isFailureEpisode(self) -> bool:
+        return self.simWorld.collisionHappened
 
-    def get_state(self) -> List:
-        return(self.actionTrace)
+    def getActionSeedTrace(self) -> List:
+        return(self.actionSeedTrace)
     
-    def set_state(self, state : Tuple) -> None:
-        self.reset_sim()
+    def setState(self, state : Tuple) -> None:
+        self.resetSim()
         state = list(state)
         for actionSeed in state:
             self.step(actionSeed)
 
-    def reset_sim(self) -> None:
-        self.actionTrace = []
+    def resetSim(self) -> None:
+        self.actionSeedTrace = []
         self.lastActionSeed = None
-        self.simWorld.reset_sim()
-
-    # def reward(self, # Reward function.
-    #     p,  # Transition probability
-    #     e,  # An episode accured (e.g. boats crashed or NMAC)
-    #     d,  # Closest distance between the boats throughout the simulation
-    #     terminal):  # Simulation has terminated
-    #     if terminal:
-    #         if e:
-    #             return self.collision_reward
-    #         else:
-    #             return -d
-    #     else:
-    #         return math.log(p)
+        self.simWorld.resetSim()
+        self.simInEndstate = False
 
     def plot(self) -> None:
-        self.simWorld.plot(self._generate_action_trace(self.actionTrace))
+        self.simWorld.plot(self._generateActionTrace(self.actionSeedTrace))
+        
+    def getPositionTrace(self, actionSeedTrace):
+        actionTrace = self._generateActionTrace(actionSeedTrace)
+        steerablePT, straightPT = self.simWorld._getPositionTrace(actionTrace)
+        return [steerablePT, straightPT]
 
-    def _get_transition_probability(self, action):
+    def _getTransitionProbability(self, action):
         if self.lastActionSeed is None:
             return 1
         else:
             return 1-abs(action - self.lastActionSeed)  # TODO: Check if this is correct
     
-    def _get_action_from_seed(self, actionSeed):
+    def _getActionFromSeed(self, actionSeed):
         return actionSeed * self.totalRange + self.minAction
         
-    def _generate_action_trace(self, actionSeedTrace):
+    def _generateActionTrace(self, actionSeedTrace):
         actionTrace = []
         for actionSeed in actionSeedTrace:
-            actionTrace.append(self._get_action_from_seed(actionSeed))
+            actionTrace.append(self._getActionFromSeed(actionSeed))
         return actionTrace
