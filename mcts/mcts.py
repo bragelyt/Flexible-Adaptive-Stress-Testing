@@ -67,6 +67,9 @@ class MCTS:
     #     self.currentNode.isTerminal = True
     
     def setStepReward(self, p) -> None:
+        if self.currentNode.stepReward != None:
+            if self.currentNode.stepReward != p:
+                print("Noise has been introduced:", self.currentNode.stepReward, p)
         self.currentNode.stepReward = p
 
     def rollout(self) -> double:

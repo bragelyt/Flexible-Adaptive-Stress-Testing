@@ -31,7 +31,7 @@ class MCTSHandler:
             if maxReward < totalReward:
                 maxReward = totalReward
                 bestActionSeedTrace = actionSeedTrace
-                if self.verbose:
+                if self.verbose: 
                     print(totalReward, "found at itteration", i)
                 if self.interface == "zeabuz":
                     self.sim.saveLast()
@@ -39,7 +39,7 @@ class MCTSHandler:
                 if i%self.verboseInterval == 0:
                     print(i)
             self.sim.resetSim()
-        if self.plotBest:
+        if self.plotBest:  # Plot method could be extracted
             if self.interface == "zeabuz":
                 self.sim.plotSavedPath()
             elif self.interface == "simple":
@@ -51,7 +51,7 @@ class MCTSHandler:
         while not self.mcts.isAtLeafNode() and not self.sim.isTerminal():
             actionSeed = self.mcts.selectNextNode()
             p = self.sim.step(actionSeed)
-            self.mcts.setStepReward(p)  # # TODO: With noice all nodes get. Remove noise. New node gets transitionProbability set at edge.
+        self.mcts.setStepReward(p)  # REVIEW:Think noice is gone
         # --------- Rollout -------- #
         rolloutTransProb = 0
         while not self.sim.isTerminal():
