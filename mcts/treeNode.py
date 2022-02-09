@@ -11,6 +11,7 @@ class TreeNode:
         # ---------- Stats --------- #
         self.timesVisited = 0  # Initiates only after visit so should be one
         self.evaluation = 0
+        self.stepReward = None
         if self.action == None:
             self.stepReward = 0
         else:

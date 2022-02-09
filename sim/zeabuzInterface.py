@@ -26,6 +26,8 @@ class ZeabuzSimInterface:
         self.crashThreshold = 1
         self.sim.start()
         self.controllers = self.sim.get_steerable_controllers()
+        self.mA = self.sim.get_milliAmphere()
+        # self.mA.controller.tracker.set_noise([0,0,0,0])
     
     def step(self, actionSeed):
         self.actionSeedTrace.append(actionSeed)
@@ -58,8 +60,8 @@ class ZeabuzSimInterface:
         print("Saving as", fileName)
         self.sim.save(fileName)
     
-    def plotSavedPath(self, fileName = "LastSim", rate = 20.0):  # TODO: Pull sim stats out to params.
-        simPlotter = ScenarioPlotter(fileName, rate = rate, plot_obs_est = False, sp_vp = False, metrics = False)
+    def plotSavedPath(self, fileName = "LastSim", rate = 20.0, borders = False, noise = True):  # TODO: Pull sim stats out to params.
+        simPlotter = ScenarioPlotter(fileName, rate = rate, plot_obs_est = noise, sp_vp = borders, metrics = False)
         simPlotter.run()
 
     def _getActionFromSeed(self, actionSeed):

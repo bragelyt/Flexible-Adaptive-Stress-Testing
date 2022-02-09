@@ -17,7 +17,7 @@ vessels:
         sp_vp_rate: 0.2
         start_time_delay: [20., 60., 120.]
         tracking: 
-          noise: # If None, noise is disabled
+          noise: # Controlled # TODO: If None, noise is disabled
             T_p: 1 #30
             k_p: 1 #100
             T_v: 1 #30
