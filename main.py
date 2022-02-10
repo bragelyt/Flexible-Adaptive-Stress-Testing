@@ -21,7 +21,7 @@ def zeabuz():
 
 def zeabuzPlotter():
     zSim = ZeabuzSimInterface("test_scenario")
-    zSim.plotSavedPath("LastSim", rate = 20, borders = True, noise=True)
+    zSim.plotSavedPath("LastSim", rate = 20, borders = False, noise=True)
 
 if __name__ == "__main__":
     # simple()

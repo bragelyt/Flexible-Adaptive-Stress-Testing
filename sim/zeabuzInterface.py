@@ -1,5 +1,6 @@
 
 from re import X
+import random
 from af_colav_sim import Simulation
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,7 +28,6 @@ class ZeabuzSimInterface:
         self.sim.start()
         self.controllers = self.sim.get_steerable_controllers()
         self.mA = self.sim.get_milliAmphere()
-        # self.mA.controller.tracker.set_noise([0,0,0,0])
     
     def step(self, actionSeed):
         self.actionSeedTrace.append(actionSeed)
@@ -36,15 +36,35 @@ class ZeabuzSimInterface:
         for vessel, controller in self.controllers.items():
             controller.update_nu_d(nu_d)
         for i in range(10):
+            self.mA.controller.tracker.set_noise(self.getDelayedState(100))
             self.terminal = not self.sim.step()
             self._updateDistance()
             if self.terminal:
                 break
         self.lastActionSeed = actionSeed
+        # self.mA.controller.tracker.set_noise([0,0,0,0])
         return math.log(p)
 
     def getActionSeedTrace(self):
         return self.actionSeedTrace
+    
+    def getDelayedState(self, delay):
+        i = len(self.sim.sim_state.xx) - delay
+        #   Pos
+        # 13: N
+        # 14: E
+        #   Angle
+        # 15: deg
+        # 16: velocity
+        xx = self.sim.sim_state.xx
+        delayPos = xx[max(0, i)][13:15]
+        delayAngle = xx[max(0, i)][15:17]
+        delayHeading = self._angleToVector(delayAngle)
+        currPos = xx[-1][13:16]
+        currAngle = xx[-1][15:17]
+        currHeading = self._angleToVector(currAngle)
+        dxdt = [delayPos[0]-currPos[0], delayPos[1]-currPos[1], delayHeading[0]-currHeading[0], delayHeading[1]-currHeading[1]]
+        return dxdt
     
     def isTerminal(self):
         return self.terminal
@@ -101,3 +121,6 @@ class ZeabuzSimInterface:
 
     def _euclideanD(self, x1, y1, x2, y2):
         return(math.sqrt((x1-x2)**2 + (y1-y2)**2))
+    
+    def _angleToVector(self, angle):
+        return[math.cos(angle[0])*angle[1], math.sin(angle[0])*angle[1]]
