@@ -10,5 +10,7 @@
     "_exploration": "Need more tuneing on expansion. Expansion c at 0.5 and ex at 0.6",
     "exploration_coefficient": 8,
     "expansion_coefficient": 0.5,
-    "expansion_exponentioal": 0.6
+    "expansion_exponentioal": 0.6,
+
+    "_zeabuzPlotting": "Plot variables for zeabuz plotter"
 }
