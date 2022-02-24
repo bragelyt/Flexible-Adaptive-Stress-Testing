@@ -1,5 +1,6 @@
 from __future__ import annotations
 import random
+from statistics import mode
 from tabnanny import verbose
 from mcts import mctsHandler
 from mcts.mcts import MCTS
@@ -15,12 +16,12 @@ def simple():
     mctsHandler.buildSingleTree(6000)
 
 def zeabuz():
-    zSim = ZeabuzSimInterface("test_scenario")
+    zSim = ZeabuzSimInterface("test_scenario_close2", mode="Noise")
     mctsHandler = MCTSHandler(zSim, plotBest=False)
-    mctsHandler.buildSingleTree(1)
+    mctsHandler.buildSingleTree(4000)
 
 def zeabuzPlotter():
-    zSim = ZeabuzSimInterface("test_scenario")
+    zSim = ZeabuzSimInterface("test_scenario_close2", mode="Noise")
     zSim.plotSavedPath("LastSim", rate = 20, borders = False, noise=True)
 
 if __name__ == "__main__":

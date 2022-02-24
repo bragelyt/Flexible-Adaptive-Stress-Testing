@@ -14,7 +14,7 @@ class MCTSHandler:
         self.sim = interface
         if self.sim.__class__.__name__ == "ZeabuzSimInterface":
             self.interface = "zeabuz"
-            self.verboseInterval = 1
+            self.verboseInterval = 10
         elif self.sim.__class__.__name__ == "SimInterface":
             self.interface = "simple"
             self.verboseInterval = 1000
