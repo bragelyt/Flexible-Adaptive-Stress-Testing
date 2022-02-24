@@ -60,7 +60,7 @@ vessels:
   #     ref: [1., -1.57]
   obs2:
     class: 'FirstOrderVessel'
-    eta0: [40., 65., -1.57]
+    eta0: [20., 60., -1.57]
     nu0: [1., 0., 0.]
     time_const: [3, 5, 3]
     controller:

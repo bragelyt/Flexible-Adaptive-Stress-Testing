@@ -51,7 +51,7 @@ vessels:
           t_horizon: [-60, 600]
   obs1:
     class: 'FirstOrderVessel'
-    eta0: [35., 50., -1.57]
+    eta0: [20., 50., -1.57]
     nu0: [1., 0., 0.]
     time_const: [3, 5, 3]
     controller:

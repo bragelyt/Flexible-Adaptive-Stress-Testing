@@ -11,10 +11,11 @@ import math
 
 class ZeabuzSimInterface:
 
-    def __init__(self, scenario) -> None:
+    def __init__(self, scenario, mode = "Steer") -> None:
         self.sim = Simulation(f'scenarios/{scenario}.yaml')
         self.controlllers = None
         self.resetSim()
+        self.mode = mode
         # self.order = len(self.controllers)  # TODO: Could be nice to add more boats. Need to refractor action to a touple
     
     def resetSim(self):
@@ -31,25 +32,67 @@ class ZeabuzSimInterface:
     
     def step(self, actionSeed):
         self.actionSeedTrace.append(actionSeed)
+        if self.mode == "Steer":
+            return self.steerStep(actionSeed)
+        elif self.mode == "Delay":
+            return self.delayStep(actionSeed)
+        elif self.mode == "Noise":
+            return self.noiseStep(actionSeed)
+    
+    def steerStep(self, actionSeed):
         nu_d = [1., 0., self._getActionFromSeed(actionSeed)]
         p = self._getTransitionProbability(actionSeed)
         for vessel, controller in self.controllers.items():
             controller.update_nu_d(nu_d)
         for i in range(10):
-            self.mA.controller.tracker.set_noise(self.getDelayedState(100))
             self.terminal = not self.sim.step()
             self._updateDistance()
             if self.terminal:
                 break
         self.lastActionSeed = actionSeed
-        # self.mA.controller.tracker.set_noise([0,0,0,0])
         return math.log(p)
+    
+    def delayStep(self, actionSeed):
+        dxdt = self.getDelayedState(actionSeed*200)
+        self.mA.controller.tracker.set_noise(dxdt)
+        for i in range(30):
+            self.terminal = not self.sim.step()
+            self._updateDistance()
+            if self.terminal:
+                break
+        return 0 #-actionSeed # REVIEW: (log(1-x) might work)
+    
+    def noiseStep(self, actionSeed):
+        noiseRanges = [[-0.5, 0.5], [-0.5, 0.5], [-0.5, 0.5], [-0.5, 0.5]] # pos: N, E, acceleration: N, E. 10 pos = 1 acce
+        totNoise = 0
+        stringSeed = str(actionSeed)
+        if "e" in stringSeed:
+            stringSeed = stringSeed[:stringSeed.find("e")]
+        while len(stringSeed) <= 18:
+            stringSeed += "0"
+        noise = []
+        for i in range(4):
+            seed = float(stringSeed[2+4*i:6+4*i])/10**4  # Seed is in range 0.0000 -> 0.9999
+            totNoise+= seed
+            noise.append(self.scaleSeedToRange(seed, noiseRanges[i]))
+        self.mA.controller.tracker.set_noise(noise)
+        for i in range(30):
+            self.terminal = not self.sim.step()
+            self._updateDistance()
+            if self.terminal:
+                break
+        return -totNoise/4
 
     def getActionSeedTrace(self):
         return self.actionSeedTrace
     
+    def scaleSeedToRange(self, seed, range):
+        totRange = range[1] - range[0]
+        scaledSeed = seed*totRange+range[0]
+        return scaledSeed
+    
     def getDelayedState(self, delay):
-        i = len(self.sim.sim_state.xx) - delay
+        i = len(self.sim.sim_state.xx) - int(delay+1)
         #   Pos
         # 13: N
         # 14: E
@@ -65,7 +108,7 @@ class ZeabuzSimInterface:
         currHeading = self._angleToVector(currAngle)
         dxdt = [delayPos[0]-currPos[0], delayPos[1]-currPos[1], delayHeading[0]-currHeading[0], delayHeading[1]-currHeading[1]]
         return dxdt
-    
+
     def isTerminal(self):
         return self.terminal
     
@@ -74,7 +117,7 @@ class ZeabuzSimInterface:
             if self.episodeHeppened:
                 return self.collisionReward
             else:
-                return -self.d*10
+                return -self.d*50  # Needs tuning
 
     def saveLast(self, fileName = "LastSim"):
         print("Saving as", fileName)
@@ -108,7 +151,7 @@ class ZeabuzSimInterface:
         if self.d < self.crashThreshold:
             self.terminal = True
             self.episodeHeppened = True
-            print("Crashed")
+            # print("Crashed")
         if mAx > 99:
             # print("Reached dock")
             self.terminal = True
