@@ -73,8 +73,9 @@ class ZeabuzSimInterface:
         noise = []
         for i in range(4):
             seed = float(stringSeed[2+4*i:6+4*i])/10**4  # Seed is in range 0.0000 -> 0.9999
-            totNoise+= seed
-            noise.append(self.scaleSeedToRange(seed, noiseRanges[i]))
+            scaledNoise = self.scaleSeedToRange(seed, noiseRanges[i])
+            totNoise+= abs(seed)
+            noise.append(scaledNoise)
         self.mA.controller.tracker.set_noise(noise)
         for i in range(30):
             self.terminal = not self.sim.step()
