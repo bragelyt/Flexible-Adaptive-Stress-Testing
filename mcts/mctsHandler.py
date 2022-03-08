@@ -45,6 +45,7 @@ class MCTSHandler:
                 totalReward, actionSeedTrace = self.loop()
                 self.saveBest(totalReward, actionSeedTrace, j + loopsPrRoot*i)
             simState.append(self.mcts.setNextRoot())
+            # print(simState)
         print(self.maxReward)
         if self.plotBest:
             self.plotResult()

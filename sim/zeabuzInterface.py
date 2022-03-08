@@ -29,6 +29,11 @@ class ZeabuzSimInterface:
         self.sim.start()
         self.controllers = self.sim.get_steerable_controllers()
         self.mA = self.sim.get_milliAmphere()
+
+    def setState(self, state) -> None:
+        self.resetSim()
+        for actionSeed in state:
+            self.step(actionSeed)
     
     def step(self, actionSeed):
         self.actionSeedTrace.append(actionSeed)
@@ -74,7 +79,7 @@ class ZeabuzSimInterface:
         for i in range(4):
             seed = float(stringSeed[2+4*i:6+4*i])/10**4  # Seed is in range 0.0000 -> 0.9999
             scaledNoise = self.scaleSeedToRange(seed, noiseRanges[i])
-            totNoise+= abs(seed)
+            totNoise+= abs(scaledNoise)
             noise.append(scaledNoise)
         self.mA.controller.tracker.set_noise(noise)
         for i in range(30):
