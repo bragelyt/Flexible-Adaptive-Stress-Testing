@@ -1,19 +1,18 @@
 from __future__ import annotations
-import random
-from statistics import mode
-from tabnanny import verbose
-from mcts import mctsHandler
-from mcts.mcts import MCTS
 from mcts.mctsHandler import MCTSHandler
 from sim.simInterface import SimInterface
 from sim.zeabuzInterface import ZeabuzSimInterface
-from datetime import datetime
 
 
 def simple():
     bSim = SimInterface()
-    mctsHandler = MCTSHandler(bSim, plotBest=True, verbose=True)
-    mctsHandler.buildSingleTree(6000)
+    for i in range(10):
+        mctsHandler = MCTSHandler(bSim, plotBest=False, verbose=False)
+        mctsHandler.buildSingleTree(30000)
+    print("-----")
+    for i in range(10):
+        mctsHandler = MCTSHandler(bSim, plotBest=False, verbose=False)
+        mctsHandler.buildDescendingTree(2000)
 
 def zeabuz():
     zSim = ZeabuzSimInterface("test_scenario_close2", mode="Noise")
@@ -25,8 +24,6 @@ def zeabuzPlotter():
     zSim.plotSavedPath("LastSim", rate = 20, borders = False, noise=True)
 
 if __name__ == "__main__":
-    # simple()
-    zeabuz()
-    zeabuzPlotter()
-
-
+    simple()
+    # zeabuz()
+    # zeabuzPlotter()
