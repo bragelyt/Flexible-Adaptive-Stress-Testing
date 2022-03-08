@@ -60,7 +60,7 @@ class MCTS:
     def isAtLeafNode(self) -> bool:
         return self.leafNode
 
-    def setAtRoot(self) -> None:
+    def setAtRoot(self) -> None:  # REVIEW: Trolig litt ubrukelig
         self.leafNode = False
 
     # def setCurrentNodeTerminal(self):  # REVIEW: Might not need this here. Could be handled in handler
@@ -76,10 +76,22 @@ class MCTS:
         return random.random()
 
     def backpropagate(self, reward) -> double:
-        while self.currentNode != self.rootNode:
+        while self.currentNode.parrent != None:
             reward = reward + self.currentNode.stepReward  # REVIEW: Might be this simple, but I am tired.
             self.currentNode.visitNode()
             self.currentNode.eveluate(reward)
             self.currentNode = self.currentNode.parrent
         self.currentNode.visitNode()  # REVIEW: Doublecheck that some backrpop is not lost.
+        self.currentNode = self.rootNode
         return(reward)
+    
+    def setNextRoot(self) -> double:
+        maxEval = -math.inf
+        successor = None
+        for child in self.rootNode.children.values():
+            if maxEval < child.evaluation:
+                maxEval = child.evaluation
+                successor = child
+        self.currentNode = successor
+        self.rootNode = successor
+        return successor.action

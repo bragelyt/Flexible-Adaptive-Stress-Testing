@@ -24,34 +24,38 @@ class MCTSHandler:
             self.plotter = TracePlotter()
     
     def buildSingleTree(self, loops) -> List[double]:
-        maxReward = -math.inf
-        bestActionSeedTrace = None
+        self.maxReward = -math.inf
+        self.bestActionSeedTrace = None
         for i in range(loops):
             totalReward, actionSeedTrace = self.loop()
-            if maxReward < totalReward:
-                maxReward = totalReward
-                bestActionSeedTrace = actionSeedTrace
-                if self.verbose: 
-                    print(totalReward, "found at itteration", i)
-                if self.interface == "zeabuz":
-                    self.sim.saveLast()
-            if self.verbose:
-                if i%self.verboseInterval == 0:
-                    print(i)
+            self.saveBest(totalReward, actionSeedTrace, i)
             self.sim.resetSim()
-        if self.plotBest:  # Plot method could be extracted
-            if self.interface == "zeabuz":
-                self.sim.plotSavedPath()
-            elif self.interface == "simple":
-                self.plotter.animate(bestActionSeedTrace)
-        return bestActionSeedTrace
+        print(self.maxReward)
+        if self.plotBest:
+            self.plotResult()
+        return(self.bestActionSeedTrace)
+
+    def buildDescendingTree(self, loopsPrRoot) -> List[double]:  # MCTS should keep track of root
+        self.maxReward = -math.inf
+        self.bestActionSeedTrace = None
+        simState = []
+        for i in range(15):
+            for j in range(loopsPrRoot):
+                self.sim.setState(simState)
+                totalReward, actionSeedTrace = self.loop()
+                self.saveBest(totalReward, actionSeedTrace, j + loopsPrRoot*i)
+            simState.append(self.mcts.setNextRoot())
+        print(self.maxReward)
+        if self.plotBest:
+            self.plotResult()
+        return(self.bestActionSeedTrace)
 
     def loop(self) -> Tuple[double, double]:
         #  Selection and progressive widening  #
         while not self.mcts.isAtLeafNode() and not self.sim.isTerminal():
             actionSeed = self.mcts.selectNextNode()
             p = self.sim.step(actionSeed)
-        self.mcts.setStepReward(p)  # REVIEW:Think noice is gone
+        self.mcts.setStepReward(p)
         # --------- Rollout -------- #
         rolloutTransProb = 0
         while not self.sim.isTerminal():
@@ -62,4 +66,24 @@ class MCTSHandler:
         totalReward = self.mcts.backpropagate(terminalReward + rolloutTransProb)
         self.mcts.setAtRoot()
         actionSeedTrace = self.sim.getActionSeedTrace()
-        return (totalReward, actionSeedTrace)
+        return(totalReward, actionSeedTrace)
+
+    def saveBest(self, totalReward, actionSeedTrace, iterationNr):
+        if self.maxReward < totalReward:
+            self.maxReward = totalReward
+            self.bestActionSeedTrace = actionSeedTrace
+            if self.verbose: 
+                print(totalReward, "found at itteration", iterationNr)
+            if self.interface == "zeabuz":
+                self.sim.saveLast()
+        if self.verbose:
+            if iterationNr%self.verboseInterval == 0:
+                print(iterationNr)
+    
+    def plotResult(self):
+        if self.interface == "zeabuz":
+            self.sim.plotSavedPath()
+        elif self.interface == "simple":
+            self.plotter.animate(self.bestActionSeedTrace)
+            print(self.maxReward)
+        return self.bestActionSeedTrace
