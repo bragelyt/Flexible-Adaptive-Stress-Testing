@@ -11,11 +11,11 @@ class MCTSHandler:
 
     def __init__(self, interface, verbose = True, plotBest = False) -> None:
         self.mcts = MCTS()
-        self.sim = interface
-        if self.sim.__class__.__name__ == "ZeabuzSimInterface":
+        self.simInterface = interface
+        if self.simInterface.__class__.__name__ == "ZeabuzSimInterface":
             self.interface = "zeabuz"
             self.verboseInterval = 10
-        elif self.sim.__class__.__name__ == "SimInterface":
+        elif self.simInterface.__class__.__name__ == "SimInterface":
             self.interface = "simple"
             self.verboseInterval = 1000
         self.plotBest = plotBest
@@ -27,9 +27,9 @@ class MCTSHandler:
         self.maxReward = -math.inf
         self.bestActionSeedTrace = None
         for i in range(loops):
+            self.simInterface.resetSim()
             totalReward, actionSeedTrace = self.loop()
             self.saveBest(totalReward, actionSeedTrace, i)
-            self.sim.resetSim()
         print(self.maxReward)
         if self.plotBest:
             self.plotResult()
@@ -41,7 +41,7 @@ class MCTSHandler:
         simState = []
         for i in range(15):
             for j in range(loopsPrRoot):
-                self.sim.setState(simState)
+                self.simInterface.setState(simState)
                 totalReward, actionSeedTrace = self.loop()
                 self.saveBest(totalReward, actionSeedTrace, j + loopsPrRoot*i)
             simState.append(self.mcts.setNextRoot())
@@ -53,20 +53,20 @@ class MCTSHandler:
 
     def loop(self) -> Tuple[double, double]:
         #  Selection and progressive widening  #
-        while not self.mcts.isAtLeafNode() and not self.sim.isTerminal():
+        while not self.mcts.isAtLeafNode() and not self.simInterface.isTerminal():
             actionSeed = self.mcts.selectNextNode()
-            p = self.sim.step(actionSeed)
+            p = self.simInterface.step(actionSeed)
         self.mcts.setStepReward(p)
         # --------- Rollout -------- #
         rolloutTransProb = 0
-        while not self.sim.isTerminal():
+        while not self.simInterface.isTerminal():
             actionSeed = self.mcts.rollout()
-            rolloutTransProb += self.sim.step(actionSeed)
+            rolloutTransProb += self.simInterface.step(actionSeed)
         # ------ Backpropagate ----- #
-        terminalReward = self.sim.terminalReward()
+        terminalReward = self.simInterface.terminalReward()
         totalReward = self.mcts.backpropagate(terminalReward + rolloutTransProb)
         self.mcts.setAtRoot()
-        actionSeedTrace = self.sim.getActionSeedTrace()
+        actionSeedTrace = self.simInterface.getActionSeedTrace()
         return(totalReward, actionSeedTrace)
 
     def saveBest(self, totalReward, actionSeedTrace, iterationNr):
@@ -76,14 +76,14 @@ class MCTSHandler:
             if self.verbose: 
                 print(totalReward, "found at itteration", iterationNr)
             if self.interface == "zeabuz":
-                self.sim.saveLast()
+                self.simInterface.saveLast()
         if self.verbose:
             if iterationNr%self.verboseInterval == 0:
                 print(iterationNr)
     
     def plotResult(self):
         if self.interface == "zeabuz":
-            self.sim.plotSavedPath()
+            self.simInterface.plotSavedPath()
         elif self.interface == "simple":
             self.plotter.animate(self.bestActionSeedTrace)
             print(self.maxReward)
