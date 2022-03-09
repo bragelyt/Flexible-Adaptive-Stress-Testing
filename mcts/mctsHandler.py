@@ -11,11 +11,11 @@ class MCTSHandler:
 
     def __init__(self, interface, verbose = True, plotBest = False) -> None:
         self.mcts = MCTS()
-        self.sim = interface
-        if self.sim.__class__.__name__ == "ZeabuzSimInterface":
+        self.simInterface = interface
+        if self.simInterface.__class__.__name__ == "ZeabuzSimInterface":
             self.interface = "zeabuz"
             self.verboseInterval = 10
-        elif self.sim.__class__.__name__ == "SimInterface":
+        elif self.simInterface.__class__.__name__ == "SimInterface":
             self.interface = "simple"
             self.verboseInterval = 1000
         self.plotBest = plotBest
@@ -24,42 +24,67 @@ class MCTSHandler:
             self.plotter = TracePlotter()
     
     def buildSingleTree(self, loops) -> List[double]:
-        maxReward = -math.inf
-        bestActionSeedTrace = None
+        self.maxReward = -math.inf
+        self.bestActionSeedTrace = None
         for i in range(loops):
+            self.simInterface.resetSim()
             totalReward, actionSeedTrace = self.loop()
-            if maxReward < totalReward:
-                maxReward = totalReward
-                bestActionSeedTrace = actionSeedTrace
-                if self.verbose: 
-                    print(totalReward, "found at itteration", i)
-                if self.interface == "zeabuz":
-                    self.sim.saveLast()
-            if self.verbose:
-                if i%self.verboseInterval == 0:
-                    print(i)
-            self.sim.resetSim()
-        if self.plotBest:  # Plot method could be extracted
-            if self.interface == "zeabuz":
-                self.sim.plotSavedPath()
-            elif self.interface == "simple":
-                self.plotter.animate(bestActionSeedTrace)
-        return bestActionSeedTrace
+            self.saveBest(totalReward, actionSeedTrace, i)
+        print(self.maxReward)
+        if self.plotBest:
+            self.plotResult()
+        return(self.bestActionSeedTrace)
+
+    def buildDescendingTree(self, loopsPrRoot) -> List[double]:  # MCTS should keep track of root
+        self.maxReward = -math.inf
+        self.bestActionSeedTrace = None
+        simState = []
+        for i in range(15):
+            for j in range(loopsPrRoot):
+                self.simInterface.setState(simState)
+                totalReward, actionSeedTrace = self.loop()
+                self.saveBest(totalReward, actionSeedTrace, j + loopsPrRoot*i)
+            simState.append(self.mcts.setNextRoot())
+            # print(simState)
+        print(self.maxReward)
+        if self.plotBest:
+            self.plotResult()
+        return(self.bestActionSeedTrace)
 
     def loop(self) -> Tuple[double, double]:
         #  Selection and progressive widening  #
-        while not self.mcts.isAtLeafNode() and not self.sim.isTerminal():
+        while not self.mcts.isAtLeafNode() and not self.simInterface.isTerminal():
             actionSeed = self.mcts.selectNextNode()
-            p = self.sim.step(actionSeed)
-        self.mcts.setStepReward(p)  # REVIEW:Think noice is gone
+            p = self.simInterface.step(actionSeed)
+        self.mcts.setStepReward(p)
         # --------- Rollout -------- #
         rolloutTransProb = 0
-        while not self.sim.isTerminal():
+        while not self.simInterface.isTerminal():
             actionSeed = self.mcts.rollout()
-            rolloutTransProb += self.sim.step(actionSeed)
+            rolloutTransProb += self.simInterface.step(actionSeed)
         # ------ Backpropagate ----- #
-        terminalReward = self.sim.terminalReward()
+        terminalReward = self.simInterface.terminalReward()
         totalReward = self.mcts.backpropagate(terminalReward + rolloutTransProb)
         self.mcts.setAtRoot()
-        actionSeedTrace = self.sim.getActionSeedTrace()
-        return (totalReward, actionSeedTrace)
+        actionSeedTrace = self.simInterface.getActionSeedTrace()
+        return(totalReward, actionSeedTrace)
+
+    def saveBest(self, totalReward, actionSeedTrace, iterationNr):
+        if self.maxReward < totalReward:
+            self.maxReward = totalReward
+            self.bestActionSeedTrace = actionSeedTrace
+            if self.verbose: 
+                print(totalReward, "found at itteration", iterationNr)
+            if self.interface == "zeabuz":
+                self.simInterface.saveLast()
+        if self.verbose:
+            if iterationNr%self.verboseInterval == 0:
+                print(iterationNr)
+    
+    def plotResult(self):
+        if self.interface == "zeabuz":
+            self.simInterface.plotSavedPath()
+        elif self.interface == "simple":
+            self.plotter.animate(self.bestActionSeedTrace)
+            print(self.maxReward)
+        return self.bestActionSeedTrace

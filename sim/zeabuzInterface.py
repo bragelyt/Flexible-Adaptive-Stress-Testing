@@ -1,7 +1,8 @@
 
 from re import X
-import random
+import random, json
 from af_colav_sim import Simulation
+from sim.adversarialRouter import AdversarialRouter
 import numpy as np
 import matplotlib.pyplot as plt
 from af_colav_sim.data_utils import pack_array
@@ -11,11 +12,16 @@ import math
 
 class ZeabuzSimInterface:
 
-    def __init__(self, scenario, mode = "Steer") -> None:
+    def __init__(self, scenario, mode = "Steer", route = False, steerablePaths = None) -> None:  #TODO: add steerablePaths to scenario.yaml file
         self.sim = Simulation(f'scenarios/{scenario}.yaml')
-        self.controlllers = None
-        self.resetSim()
+        self.controllers = None
         self.mode = mode
+        self.route = route
+        self.steerablePaths = steerablePaths
+        if steerablePaths is not None:
+            with open("scenarios/"+steerablePaths+".json", 'r') as f:
+                self.steerablePaths = json.load(f)
+        self.resetSim()
         # self.order = len(self.controllers)  # TODO: Could be nice to add more boats. Need to refractor action to a touple
     
     def resetSim(self):
@@ -29,10 +35,25 @@ class ZeabuzSimInterface:
         self.sim.start()
         self.controllers = self.sim.get_steerable_controllers()
         self.mA = self.sim.get_milliAmphere()
+        self.routers = []
+        if self.route:
+            for key, controller in self.controllers.items():
+                if key in self.steerablePaths.keys():
+                    if controller.name == "SteerableVesselController":
+                        router = AdversarialRouter(controller, self.steerablePaths[key])
+                        self.routers.append(router)
+
+    def setState(self, state) -> None:
+        self.resetSim()
+        for actionSeed in state:
+            self.step(actionSeed)
     
     def step(self, actionSeed):
+        if self.route:
+            for router in self.routers:
+                router.step()
         self.actionSeedTrace.append(actionSeed)
-        if self.mode == "Steer":
+        if self.mode == "Steer":  # Steer and route not compatible yet. Could be fixed so that steer is path noise added on top of steer.
             return self.steerStep(actionSeed)
         elif self.mode == "Delay":
             return self.delayStep(actionSeed)
@@ -53,14 +74,15 @@ class ZeabuzSimInterface:
         return math.log(p)
     
     def delayStep(self, actionSeed):
-        dxdt = self.getDelayedState(actionSeed*200)
-        self.mA.controller.tracker.set_noise(dxdt)
+        p = self._getTransitionProbability(actionSeed)
         for i in range(30):
+            dxdt = self.getDelayedState(actionSeed * 400)
+            self.mA.controller.tracker.set_noise(dxdt)
             self.terminal = not self.sim.step()
             self._updateDistance()
             if self.terminal:
                 break
-        return 0 #-actionSeed # REVIEW: (log(1-x) might work)
+        return -actionSeed*0.5 + math.log(p)# REVIEW: (log(1-x) might work)
     
     def noiseStep(self, actionSeed):
         noiseRanges = [[-0.5, 0.5], [-0.5, 0.5], [-0.5, 0.5], [-0.5, 0.5]] # pos: N, E, acceleration: N, E. 10 pos = 1 acce
@@ -73,8 +95,9 @@ class ZeabuzSimInterface:
         noise = []
         for i in range(4):
             seed = float(stringSeed[2+4*i:6+4*i])/10**4  # Seed is in range 0.0000 -> 0.9999
-            totNoise+= seed
-            noise.append(self.scaleSeedToRange(seed, noiseRanges[i]))
+            scaledNoise = self.scaleSeedToRange(seed, noiseRanges[i])
+            totNoise+= abs(scaledNoise)
+            noise.append(scaledNoise)
         self.mA.controller.tracker.set_noise(noise)
         for i in range(30):
             self.terminal = not self.sim.step()
@@ -103,7 +126,7 @@ class ZeabuzSimInterface:
         delayPos = xx[max(0, i)][13:15]
         delayAngle = xx[max(0, i)][15:17]
         delayHeading = self._angleToVector(delayAngle)
-        currPos = xx[-1][13:16]
+        currPos = xx[-1][13:15]
         currAngle = xx[-1][15:17]
         currHeading = self._angleToVector(currAngle)
         dxdt = [delayPos[0]-currPos[0], delayPos[1]-currPos[1], delayHeading[0]-currHeading[0], delayHeading[1]-currHeading[1]]

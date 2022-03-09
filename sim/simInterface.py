@@ -43,9 +43,8 @@ class SimInterface:
     def getActionSeedTrace(self) -> List:
         return(self.actionSeedTrace)
     
-    def setState(self, state : Tuple) -> None:
+    def setState(self, state) -> None:
         self.resetSim()
-        state = list(state)
         for actionSeed in state:
             self.step(actionSeed)
 

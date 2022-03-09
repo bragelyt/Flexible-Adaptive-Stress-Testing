@@ -49,18 +49,9 @@ vessels:
           max_cross_track_error: 3
           low_vel_thr: 0.05
           t_horizon: [-60, 600]
-  # obs1:
-  #   class: 'FirstOrderVessel'
-  #   eta0: [50., 50., 1.57]
-  #   nu0: [20., 0., 0.]
-  #   time_const: [3, 5, 3]
-  #   controller:
-  #     class: 'SpeedHeadingController'
-  #     k_yaw: 0.2
-  #     ref: [1., -1.57]
   curveBoat:
     class: 'FirstOrderVessel'
-    eta0: [20., 60., -1.57]
+    eta0: [20., 45., 0]
     nu0: [1., 0., 0.]
     time_const: [3, 5, 3]
     controller:
