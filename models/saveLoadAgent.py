@@ -1,34 +1,47 @@
 import torch
 import json
-from models.neuralNetwork import NeuralActor
+from models.neuralNet import NetworkPolicy
 from shutil import copyfile
 
-def LoadModel(fileName):
-    with open('project2/parameters.json') as f:
-        parameters = json.load(f)
-    modelSaveLocation = parameters["model_save_location"]
-    optimizer = parameters["anet_optimizer"]
-    learningRate = parameters["anet_learning_rate"]
+def LoadModel(fileName) -> NetworkPolicy:
+    networkSaveLocation = "./saved_models/"
+    path = networkSaveLocation+fileName
+    with open(path+"_parameters.json") as f:
+        load = json.load(f)
+    networkType = list(load.keys())[1]
+    parameters = load["Setup"]
+    optimizer = parameters["optimizer"]
+    learningRate = parameters["learning_rate"]
     lossFunction = parameters["loss_function"]
-
-    model = torch.load(modelSaveLocation+fileName)
-
+    print(lossFunction)
+    network = torch.load(networkSaveLocation+fileName)
     print("loaded model", fileName)
-    return NeuralActor(
-        model=model,
+    return NetworkPolicy(
+        networkType=networkType,
+        model=network,
         optimizer=optimizer,
         learningRate=learningRate,
-        lossFunction=lossFunction,
+        lossFunction=lossFunction
     )
 
-def SaveModel(model, fileName):
-    with open('project2/parameters.json') as f:
-        parameters = json.load(f)
-    modelSaveLocation = parameters["model_save_location"]
-    path = modelSaveLocation+fileName
-    torch.save(model, path)
-    copyParameterFile(path + "_parameters.json")
-    print("Saved model", fileName)
+def SaveNetwork(model, fileName) -> None:
+    network = model.neuralNet
+    networkType = model.networkType
+    networkSaveLocation = "./saved_models/"
+    path = networkSaveLocation+fileName
+    torch.save(network, path)
+    copyParameterFile(path + "_parameters.json", networkType)
+    print("Saved network", fileName)
 
-def copyParameterFile(path: str) -> None:
-    copyfile("./project2/parameters.json", path)
+def copyParameterFile(path: str, modelType) -> None:
+    with open("models/networkParameters.json") as f:
+        fullDict = json.load(f)
+    modelDict = {}
+    if modelType.endswith("Rollout"):
+        modelDict["Setup"] = fullDict["RolloutSetup"]
+    elif modelType.endswith("Value"):
+        modelDict["Setup"] = fullDict["ValueSetup"]
+    modelDict[modelType] = fullDict[modelType]
+    with open(path, 'w') as f:
+        json.dump(modelDict, f, indent=4)
+

@@ -16,8 +16,7 @@ class TreeNode:
             self.stepReward = 0
         else:
             self.evaluation = 0
-
-        self.children : Dict[int, TreeNode] = {}
+        self.children : Dict[int, TreeNode] = {}  # SeedAction, node
         # self.childrenVisits : Dict[tuple, int] = {}  # ChildNodeState, nrOfVisits  # TODO: Change childNodeState to treeNode
         # self.childrenEvaluations : Dict[tuple, tuple] = {}
         with open("parameters.json") as f:
@@ -32,6 +31,23 @@ class TreeNode:
             self.children[newBornAction] = TreeNode(newBornAction, self)  # NOTE This is the backbone of the tree structure
         return self.children[newBornAction]
     
+    def getChildDistribution(self, nrOfBuckets):
+        if len(self.children) == 0:
+            return None
+        buckets = []
+        dist = []
+        totalVisits = 0
+        for i in range(nrOfBuckets):
+            bucket = (i+1)/nrOfBuckets
+            buckets.append(bucket)
+            dist.append(0)
+        for actionSeed, node in self.children.items():
+            i = 0
+            while actionSeed >= buckets[i]:
+                i+=1
+            dist[i] += node.timesVisited/(self.timesVisited-1)
+        return dist
+
     def uctSelect(self):  # Tree policy. "Bandit based Monte-Carlo Planning", Kocsis and Szepervari (2006)
         # NOTE: This is left without a check for if children are empty. Should resolve itself through prog widening but might fuck up
         maxValue = -math.inf

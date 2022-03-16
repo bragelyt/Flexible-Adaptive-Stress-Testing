@@ -1,13 +1,9 @@
+import math, json
 
-from re import X
-import random, json
-from af_colav_sim import Simulation
 from sim.adversarialRouter import AdversarialRouter
-import numpy as np
-import matplotlib.pyplot as plt
-from af_colav_sim.data_utils import pack_array
+
+from af_colav_sim import Simulation
 from af_colav_sim.plotting.scenario_plotter import ScenarioPlotter
-import math
 
 
 class ZeabuzSimInterface:
@@ -48,6 +44,13 @@ class ZeabuzSimInterface:
         for actionSeed in state:
             self.step(actionSeed)
     
+    def getStateRepresentation(self):
+        xx = self.sim.sim_state.xx
+        zeabuzPos = xx[-1][0:3]
+        adversaryPos = xx[-1][13:16]
+        stateRepresentation = list(zeabuzPos) + list(adversaryPos)
+        return stateRepresentation
+
     def step(self, actionSeed):
         if self.route:
             for router in self.routers:

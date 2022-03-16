@@ -8,6 +8,8 @@ from mcts import treeNode
 
 from mcts.treeNode import TreeNode
 from sim.simInterface import SimInterface
+from models.neuralNet import NetworkPolicy
+from models.saveLoadAgent import SaveNetwork,LoadModel
 
 # TODO: Pull sim out of mcts.
 
@@ -23,15 +25,23 @@ from sim.simInterface import SimInterface
 
 class MCTS:  
     
-    def __init__(self) -> None:
-        self.rootNode = TreeNode(None, None)  # NOTE: Might cause problems with None action, but it is correct. T=0
-        self.rootNode.visitNode()
-        self.currentNode = self.rootNode
+    def __init__(self, rolloutType, valuePolicy, interface) -> None:
+        self.rolloutType = rolloutType
+        self.reset()
         self.simIntefrace = SimInterface()
-        self.endStates = []
-        self.crashStates = []
-        self.leafNode = False
+        if rolloutType is not None:
+            if interface is not None:
+                self.rolloutPolicy = LoadModel(interface + rolloutType) # REVIEW: , batchSize=20)  
+            else:
+                self.rolloutPolicy = NetworkPolicy(rolloutType) # , batchSize=20)
+        # if valuePolicy is not None:
+        #     if interface is not None:
+        #         self.valuePolicy = LoadModel(interface + valuePolicy) # , batchSize=20)
+        #     else:
+        #         self.valuePolicy = NetworkPolicy(valuePolicy) # , batchSize=20)
         self.bestState = None
+        self.rolloutTrainingBatch = []
+        self.rolloutEpsilon = 1.0
         self.bestReward = -math.inf
         with open("parameters.json") as f:
             params = json.load(f)   # Pass out to controller
@@ -52,6 +62,15 @@ class MCTS:
         self.currentNode = selectedNode
         return selectedNode.action
     
+    def reset(self):
+        # self.trainingBatch = []  # REVIEW: Fucker dette ting opp?
+        self.rootNode = TreeNode(None, None)  # NOTE: Might cause problems with None action, but it is correct. T=0
+        self.rootNode.visitNode()
+        self.currentNode = self.rootNode
+        self.endStates = []
+        self.crashStates = []
+        self.leafNode = False
+
     def addRandomChild(self) -> TreeNode:
         seedAction = random.random()
         newBornAction = seedAction
@@ -67,13 +86,44 @@ class MCTS:
     #     self.currentNode.isTerminal = True
     
     def setStepReward(self, p) -> None:
-        if self.currentNode.stepReward != None:
+        if p is None:
+            pass
+            # print("current step reward:", self.currentNode.stepReward)
+        else:
+            self.currentNode.stepReward = p
+        if self.currentNode.stepReward is not None and p is not None:
             if self.currentNode.stepReward != p:
                 print("Noise has been introduced:", self.currentNode.stepReward, p)
-        self.currentNode.stepReward = p
+        
 
     def rollout(self) -> double:
         return random.random()
+    
+    def getRolloutPolicy(self, state):
+        # if random.random() > self.rolloutEpsilon:
+        #     return self.rollout()
+        # else:
+        roulette = random.random()
+        distPrediction = self.rolloutPolicy.getRolloutAction(state)
+        summedActions = 0
+        for index, action in enumerate(distPrediction):
+            summedActions += action
+            if summedActions >= roulette:
+                return random.random()/len(distPrediction) + index/len(distPrediction)  # TODO: Make pretty
+    
+    def saveModel(self, fileName):
+        if self.rolloutType is not None:
+            SaveNetwork(self.rolloutPolicy, fileName)
+
+    def addNodeToTrainingBatch(self, state):
+        target = self.rootNode.getChildDistribution(nrOfBuckets = 10)
+        if target is not None:
+            self.rolloutTrainingBatch.append([state, target])
+
+    def trainRolloutPolicyAtRoot(self):
+        print("Batch size:", len(self.rolloutTrainingBatch))
+        self.rolloutPolicy.trainOnBatch(self.rolloutTrainingBatch)
+        # self.rolloutTrainingBatch = []
 
     def backpropagate(self, reward) -> double:
         while self.currentNode.parrent != None:
@@ -92,6 +142,9 @@ class MCTS:
             if maxEval < child.evaluation:
                 maxEval = child.evaluation
                 successor = child
-        self.currentNode = successor
-        self.rootNode = successor
-        return successor.action
+        if successor is None:
+            return None
+        else:
+            self.currentNode = successor
+            self.rootNode = successor
+            return successor.action
