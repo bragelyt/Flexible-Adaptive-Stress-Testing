@@ -12,6 +12,7 @@ class TreeNode:
         self.timesVisited = 0  # Initiates only after visit so should be one
         self.evaluation = 0
         self.stepReward = None
+        self.stateRepresentation = None
         if self.action == None:
             self.stepReward = 0
         else:
@@ -31,12 +32,11 @@ class TreeNode:
             self.children[newBornAction] = TreeNode(newBornAction, self)  # NOTE This is the backbone of the tree structure
         return self.children[newBornAction]
     
-    def getChildDistribution(self, nrOfBuckets):
+    def getChildDistribution(self, nrOfBuckets):  # TODO: A few things could be done. Look into -1 or -2 to all visits, only taking max pr bucket or exponential visits.
         if len(self.children) == 0:
             return None
         buckets = []
         dist = []
-        totalVisits = 0
         for i in range(nrOfBuckets):
             bucket = (i+1)/nrOfBuckets
             buckets.append(bucket)
@@ -47,17 +47,6 @@ class TreeNode:
                 i+=1
             dist[i] += node.timesVisited/(self.timesVisited-1)
         return dist
-
-    def uctSelect(self):  # Tree policy. "Bandit based Monte-Carlo Planning", Kocsis and Szepervari (2006)
-        # NOTE: This is left without a check for if children are empty. Should resolve itself through prog widening but might fuck up
-        maxValue = -math.inf
-        bestChild : TreeNode = None
-        for child in self.children.values():
-            x = child.evaluation + self.explorationCoefficient*(math.sqrt(math.log(self.timesVisited)/(1+child.timesVisited)))
-            if x > maxValue:
-                bestChild = child
-                maxValue = x
-        return bestChild
 
     def eveluate(self, reward): # Called dureing backprop
         self.evaluation = self.evaluation + (reward - self.evaluation)/self.timesVisited

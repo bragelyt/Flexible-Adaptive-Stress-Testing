@@ -1,16 +1,16 @@
 {
     "Setup": {
-        "learning_rate": 0.005,
-        "activation_function": "gelu",
+        "learning_rate": 0.001,
+        "activation_function": "relu",
         "optimizer": "adam",
         "loss_function": "mse",
-        "output_function": "softmax",
+        "output_function": "linear",
         "_anet_model_to_load": "",
         "_file_name": "superModel"
     },
-    "SimpleRollout": {
+    "SimpleValue": {
         "input": {
-            "in_features": 5,
+            "in_features": 6,
             "out_features": 64
         },
         "linear1": {
@@ -23,7 +23,7 @@
         },
         "output": {
             "in_features": 64,
-            "out_features": 10
+            "out_features": 1
         }
     }
 }

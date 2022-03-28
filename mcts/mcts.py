@@ -9,7 +9,7 @@ from mcts import treeNode
 from mcts.treeNode import TreeNode
 from sim.simInterface import SimInterface
 from models.neuralNet import NetworkPolicy
-from models.saveLoadAgent import SaveNetwork,LoadModel
+from models.saveLoadAgent import SaveNetwork, LoadModel
 
 # TODO: Pull sim out of mcts.
 
@@ -31,14 +31,22 @@ class MCTS:
         self.simIntefrace = SimInterface()
         if rolloutType is not None:
             if interface is not None:
-                self.rolloutPolicy = LoadModel(interface + rolloutType) # REVIEW: , batchSize=20)  
-            else:
+                try:
+                    self.rolloutPolicy = LoadModel(interface + rolloutType) # REVIEW: , batchSize=20)  
+                except:
+                    print(f"Rollout policy {interface + rolloutType} not found or loaded. New model initiated")
+                    interface = None
+            if interface is None:
                 self.rolloutPolicy = NetworkPolicy(rolloutType) # , batchSize=20)
-        # if valuePolicy is not None:
-        #     if interface is not None:
-        #         self.valuePolicy = LoadModel(interface + valuePolicy) # , batchSize=20)
-        #     else:
-        #         self.valuePolicy = NetworkPolicy(valuePolicy) # , batchSize=20)
+        if valuePolicy is not None:
+            if interface is not None:
+                try:
+                    self.valuePolicy = LoadModel(interface + valuePolicy) # , batchSize=20)
+                except:
+                    print(f"Value policy {interface + rolloutType} not found or loaded. New model initiated")
+                    interface = None
+            if interface is None:
+                self.valuePolicy = NetworkPolicy(valuePolicy) # , batchSize=20)
         self.bestState = None
         self.rolloutTrainingBatch = []
         self.rolloutEpsilon = 1.0
@@ -51,25 +59,27 @@ class MCTS:
 
 # ~~~ Selection and progressive widening ~~ #
 
-    def selectNextNode(self) -> int:  # Returns next action towards a leaf node. Should happen in paralell with simulator.
+    def selectNextNode(self, stateRepresentation) -> int:  # Returns next action towards a leaf node. Should happen in paralell with simulator.
         if len(self.currentNode.children) <= self.k*self.currentNode.timesVisited**self.a:  # Prog wideniung
             self.addRandomChild()
-        selectedNode = self.currentNode.uctSelect()
+        selectedNode = self.uctSelect(stateRepresentation)
         # if selectedNode is None:  # If no children foundleaf node, initiate node.
         #     selectedNode = self.addRandomChild(self.currentNode)
         if selectedNode.timesVisited == 0:  # If first time visiting, it should be a leaf node.
             self.leafNode = True
         self.currentNode = selectedNode
-        return selectedNode.action
+        return selectedNode
     
     def reset(self):
         # self.trainingBatch = []  # REVIEW: Fucker dette ting opp?
         self.rootNode = TreeNode(None, None)  # NOTE: Might cause problems with None action, but it is correct. T=0
+        self.originalRoot = self.rootNode
         self.rootNode.visitNode()
         self.currentNode = self.rootNode
         self.endStates = []
         self.crashStates = []
         self.leafNode = False
+        return self.rootNode
 
     def addRandomChild(self) -> TreeNode:
         seedAction = random.random()
@@ -99,21 +109,27 @@ class MCTS:
     def rollout(self) -> double:
         return random.random()
     
-    def getRolloutPolicy(self, state):
+    def getRolloutPolicy(self, state):  # REVIEW: Test denne
         # if random.random() > self.rolloutEpsilon:
         #     return self.rollout()
         # else:
-        roulette = random.random()
         distPrediction = self.rolloutPolicy.getRolloutAction(state)
         summedActions = 0
+        cumProb = 0
+        exponent = 2
+        for prob in distPrediction:
+            cumProb += prob**exponent
+        roulette = random.random()*cumProb
         for index, action in enumerate(distPrediction):
-            summedActions += action
+            summedActions += action**exponent
             if summedActions >= roulette:
                 return random.random()/len(distPrediction) + index/len(distPrediction)  # TODO: Make pretty
     
-    def saveModel(self, fileName):
+    def saveModel(self, interface, rolloutType, valueType):
         if self.rolloutType is not None:
-            SaveNetwork(self.rolloutPolicy, fileName)
+            SaveNetwork(self.rolloutPolicy, interface + rolloutType)
+        if self.valuePolicy is not None:
+            SaveNetwork(self.valuePolicy, interface + valueType)
 
     def addNodeToTrainingBatch(self, state):
         target = self.rootNode.getChildDistribution(nrOfBuckets = 10)
@@ -121,9 +137,20 @@ class MCTS:
             self.rolloutTrainingBatch.append([state, target])
 
     def trainRolloutPolicyAtRoot(self):
-        print("Batch size:", len(self.rolloutTrainingBatch))
         self.rolloutPolicy.trainOnBatch(self.rolloutTrainingBatch)
-        # self.rolloutTrainingBatch = []
+        self.rolloutTrainingBatch = []
+
+    def trainValuePolicyOnTree(self):
+        nodes = [self.originalRoot]
+        batch = []
+        while len(nodes) > 0:
+            node = nodes.pop(0)
+            for child in node.children.values():
+                nodes.append(child)
+                trainingValues = [node.stateRepresentation + [child.action], [node.evaluation]]
+                batch.append(trainingValues)
+        self.valuePolicy.trainOnBatch(batch)
+
 
     def backpropagate(self, reward) -> double:
         while self.currentNode.parrent != None:
@@ -136,11 +163,11 @@ class MCTS:
         return(reward)
     
     def setNextRoot(self) -> double:
-        maxEval = -math.inf
+        maxVisits = 0 # REVIEW: Går bort fra max eval til vitits.
         successor = None
         for child in self.rootNode.children.values():
-            if maxEval < child.evaluation:
-                maxEval = child.evaluation
+            if maxVisits < child.timesVisited:
+                maxVisits = child.timesVisited
                 successor = child
         if successor is None:
             return None
@@ -148,3 +175,17 @@ class MCTS:
             self.currentNode = successor
             self.rootNode = successor
             return successor.action
+    
+    def uctSelect(self, stateRepresentation):  # Tree policy. "Bandit based Monte-Carlo Planning", Kocsis and Szepervari (2006)
+        # NOTE: This is left without a check for if children are empty. Should resolve itself through prog widening but might fuck up
+        maxValue = -math.inf
+        bestChild : TreeNode = None
+        for child in self.currentNode.children.values():
+            # print(stateRepresentation)
+            # prediction =  stateRepresentation + [child.action]
+            prediction = self.valuePolicy.getPrediction(stateRepresentation + [child.action])[0]
+            x = 0.6 * child.evaluation + self.currentNode.explorationCoefficient*(math.sqrt(math.log(self.currentNode.timesVisited)/(1+child.timesVisited))) + 0.4*prediction
+            if x > maxValue:
+                bestChild = child
+                maxValue = x
+        return bestChild

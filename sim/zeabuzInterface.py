@@ -57,11 +57,11 @@ class ZeabuzSimInterface:
                 router.step()
         self.actionSeedTrace.append(actionSeed)
         if self.mode == "Steer":  # Steer and route not compatible yet. Could be fixed so that steer is path noise added on top of steer.
-            return self.steerStep(actionSeed)
+            return self.steerStep(actionSeed) * 10
         elif self.mode == "Delay":
-            return self.delayStep(actionSeed)
+            return self.delayStep(actionSeed) * 10
         elif self.mode == "Noise":
-            return self.noiseStep(actionSeed)
+            return self.noiseStep(actionSeed) * 10
     
     def steerStep(self, actionSeed):
         nu_d = [1., 0., self._getActionFromSeed(actionSeed)]
@@ -85,7 +85,7 @@ class ZeabuzSimInterface:
             self._updateDistance()
             if self.terminal:
                 break
-        return -actionSeed*0.5 + math.log(p)# REVIEW: (log(1-x) might work)
+        return - actionSeed*0.5 + math.log(p)# REVIEW: (log(1-x) might work)
     
     def noiseStep(self, actionSeed):
         noiseRanges = [[-0.5, 0.5], [-0.5, 0.5], [-0.5, 0.5], [-0.5, 0.5]] # pos: N, E, acceleration: N, E. 10 pos = 1 acce

@@ -1,3 +1,4 @@
+from black import out
 import torch, json, random
 import torch.nn as nn
 import torch.nn.functional as F
@@ -6,8 +7,9 @@ import torch.optim as optim
 
 class NeuralNetwork(nn.Module):
 
-    def __init__(self, activationFunction, networkType):
+    def __init__(self, activationFunction, outputFunction, networkType):
         self.activationFunction = activationFunction
+        self.outputFunction = outputFunction
         super(NeuralNetwork, self).__init__()
         self.layers = nn.ModuleList()
         if "input" in networkType.keys():
@@ -33,16 +35,21 @@ class NeuralNetwork(nn.Module):
             if index == 0:
                 input = layer(input)
             elif index == len(self.layers) - 1:
-                input = F.softmax(layer(input), dim=0)
+                if self.outputFunction == "linear":
+                    input = layer(input)
+                else:
+                    input = F.softmax(layer(input), dim=0)
             else:
                 if(self.activationFunction == "relu"):
                     input = F.relu(layer(input))
                 elif(self.activationFunction == "linear"):
                     input = layer(input)
-                if(self.activationFunction == "sigmoid"):
+                elif(self.activationFunction == "sigmoid"):
                     input = torch.sigmoid(layer(input))
-                if(self.activationFunction == "tanh"):
+                elif(self.activationFunction == "tanh"):
                     input = torch.tanh(layer(input))
+                elif(self.activationFunction == "gelu"):
+                    input = F.gelu(layer(input))
         return input
 
 class NetworkPolicy:
@@ -54,18 +61,20 @@ class NetworkPolicy:
             lossFunction=None):
         self.networkType = networkType
         if networkType.endswith("Rollout"):
-            parms = "RolloutSetup"
+            params = "RolloutSetup"
         elif networkType.endswith("Value"):
-            parms = "ValueSetup"
+            params = "ValueSetup"
         with open('models/networkParameters.json') as f:
             parameters = json.load(f)
-        optimizer = optimizer if optimizer is not None else parameters[parms]["optimizer"]
-        lossFunction = lossFunction if lossFunction is not None else parameters[parms]["loss_function"]
-        learningRate = learningRate if learningRate is not None else parameters[parms]["learning_rate"]
-        activation = parameters[parms]["activation_function"]
+        optimizer = optimizer if optimizer is not None else parameters[params]["optimizer"]
+        lossFunction = lossFunction if lossFunction is not None else parameters[params]["loss_function"]
+        learningRate = learningRate if learningRate is not None else parameters[params]["learning_rate"]
+        activation = parameters[params]["activation_function"]
+        output = parameters[params]["output_function"]
         if model == None:
             self.neuralNet = NeuralNetwork(
                 activationFunction = activation,
+                outputFunction= output,
                 networkType = parameters[networkType])
         else:
             self.neuralNet = model
@@ -88,14 +97,20 @@ class NetworkPolicy:
         else: self.lossFunc = nn.MSELoss()
 
     def trainOnBatch(self, batch):
+        print("Batch size:", len(batch))
+        # for i in range(5):
+        random.shuffle(batch)
+        # if len(batch) < 1000:
         for item in batch:  # Item = [state -> [-1, board as list], actionDist -> [actios]
+            # print(' {:0.2f}'.format(item[0][0],2), [round(x,2) for x in item[1]])
             self.train(item[0], item[1])
+
     
     def train(self, state, target):
         # print(state[0], [round(x, 2) for x in target])
-        state = [float(x) for x in state] 
+        state = [float(x) for x in state]
         # state = [float(state[0])/100]
-        target = [float(x) for x in target] 
+        target = [float(x) for x in target]
         input = torch.tensor(
             state, dtype=torch.float32)
         self.optimizer.zero_grad()

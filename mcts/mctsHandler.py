@@ -1,5 +1,4 @@
-from fileinput import filename
-import math
+import math, json
 
 from typing import List, Tuple
 from numpy import double
@@ -7,11 +6,17 @@ from numpy import double
 from mcts.mcts import MCTS
 from visualize.tracePlotter import TracePlotter
 
+def rootPrint(rootNr, maxReward, maxTrace , avgReward, state, pred, isBest):
+    text = f'rootDepth: {rootNr:2.0f} | max: {maxReward:8.4f} | avg: {avgReward:8.4f} | best: {str([round(x,2) for x in maxTrace]):126s} | pred: {state:.2f} {[round(x, 3) for x in pred]}'
+    if isBest:
+        text = '\033[93m' + text + '\033[0m'
+    print(text)
+
 def resultPrint(result, iteration, trace):
     if result > 0:
-        print(f'\033[93m{result} found at itteration {iteration} | {trace}\033[0m')
+        print(f'\033[93m{result} found at iteration {iteration} | {trace}\033[0m')
     else:
-        print(f'\033[91m{result} found at itteration {iteration} | {trace}\033[0m')
+        print(f'\033[91m{result} found at iteration {iteration} | {trace}\033[0m')
 
 
 class MCTSHandler:
@@ -52,19 +57,29 @@ class MCTSHandler:
     def buildDescendingTree(self, loopsPrRoot) -> List[double]:  # MCTS should keep track of root
         self.maxReward = -math.inf
         self.bestActionSeedTrace = None
-        for h in range(20):
-            print("--------- Itteration", h,"----------")
-            self.mcts.reset()
+        # rewards = []  # REVIEW: Should be looked at, but rewards are probably correct
+        for h in range(10):
+            print(f'\033[94m--------- Iteration {h} ----------\033[0m')
+            root = self.mcts.reset()
             simState = []
-            self.simInterface.setState(simState)
+            self.simInterface.resetSim()
+            root.stateRepresentation = self.simInterface.getStateRepresentation()
             for i in range(18):
-                print(i * 5, [round(x, 2) for x in self.mcts.rolloutPolicy.getPrediction(self.simInterface.getStateRepresentation())])
+                maxReward = -1000
+                cumReward = 0
+                self.simInterface.setState(simState)
+                isBest = False
                 for j in range(loopsPrRoot):
                     self.simInterface.setState(simState)
                     totalReward, actionSeedTrace = self.loop()
-                    self.saveBest(totalReward, actionSeedTrace, j + loopsPrRoot*i)
+                    if totalReward > maxReward:
+                        maxReward = totalReward
+                        bestPath = actionSeedTrace
+                    cumReward += totalReward
+                    isBest = self.saveBest(totalReward, actionSeedTrace, j + loopsPrRoot*i) or isBest
                 if self.rolloutPolicyType is not None:
                     if self.train:
+                        self.simInterface.setState(simState)
                         self.mcts.addNodeToTrainingBatch(self.simInterface.getStateRepresentation())
                 nextAction = self.mcts.setNextRoot()
                 if nextAction is None:
@@ -72,12 +87,14 @@ class MCTSHandler:
                 else:
                     simState.append(nextAction)
                 # print(simState)
+                rootPrint(i, maxReward, bestPath, cumReward / loopsPrRoot, self.simInterface.getStateRepresentation()[0], self.mcts.rolloutPolicy.getPrediction(self.simInterface.getStateRepresentation()), isBest)
             if self.rolloutPolicyType is not None:
-                print("--------- Training", h ,"------------")
+                print(f'\033[94m--------- Training {h} ----------\033[0m')
                 if self.train:
                     self.mcts.trainRolloutPolicyAtRoot()
-        if self.saveModel:
-            self.mcts.saveModel(self.interface + self.rolloutPolicyType)
+                    self.mcts.trainValuePolicyOnTree()
+            if self.saveModel:
+                self.mcts.saveModel(self.interface, self.rolloutPolicyType, self.valuePolivyType)
         if self.plotBest:
             self.plotResult()
         print([round(x,4) for x in self.bestActionSeedTrace])
@@ -87,8 +104,10 @@ class MCTSHandler:
         #  Selection and progressive widening  #
         p = None
         while not self.mcts.isAtLeafNode() and not self.simInterface.isTerminal():
-            actionSeed = self.mcts.selectNextNode()
+            nextNode = self.mcts.selectNextNode(self.simInterface.getStateRepresentation())
+            actionSeed = nextNode.action
             p = self.simInterface.step(actionSeed)
+            nextNode.stateRepresentation = self.simInterface.getStateRepresentation()
         self.mcts.setStepReward(p)
         # --------- Rollout -------- #
         rolloutTransProb = 0
@@ -109,10 +128,12 @@ class MCTSHandler:
         if self.maxReward < totalReward:
             self.maxReward = totalReward
             self.bestActionSeedTrace = actionSeedTrace
-            if self.verbose: 
-                resultPrint(totalReward, iterationNr, [round(x,2) for x in actionSeedTrace])
             if self.interface == "zeabuz":
                 self.simInterface.saveLast()
+            if self.verbose:
+                return True
+                resultPrint(totalReward, iterationNr, [round(x,2) for x in actionSeedTrace])
+        return False
         # if self.verbose:  # REVIEW: I overkant?
         #     if iterationNr%self.verboseInterval == 0:
         #         print(iterationNr)
