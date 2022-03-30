@@ -1,0 +1,29 @@
+{
+    "Setup": {
+        "learning_rate": 0.005,
+        "activation_function": "gelu",
+        "optimizer": "adam",
+        "loss_function": "mse",
+        "output_function": "softmax",
+        "_anet_model_to_load": "",
+        "_file_name": "superModel"
+    },
+    "ZeabuzRollout": {
+        "input": {
+            "in_features": 6,
+            "out_features": 64
+        },
+        "linear1": {
+            "in_features": 64,
+            "out_features": 124
+        },
+        "linear2": {
+            "in_features": 124,
+            "out_features": 64
+        },
+        "output": {
+            "in_features": 64,
+            "out_features": 10
+        }
+    }
+}

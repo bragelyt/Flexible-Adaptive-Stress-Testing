@@ -58,7 +58,7 @@ class MCTSHandler:
         self.maxReward = -math.inf
         self.bestActionSeedTrace = None
         # rewards = []  # REVIEW: Should be looked at, but rewards are probably correct
-        for h in range(10):
+        for h in range(100):
             print(f'\033[94m--------- Iteration {h} ----------\033[0m')
             root = self.mcts.reset()
             simState = []
