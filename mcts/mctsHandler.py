@@ -3,6 +3,7 @@ import math, json
 from typing import List, Tuple
 from numpy import double
 
+from datetime import datetime
 from mcts.mcts import MCTS
 from visualize.tracePlotter import TracePlotter
 
@@ -27,6 +28,7 @@ class MCTSHandler:
         self.loadModel = loadModel
         self.saveModel = saveModel
         self.train = train
+        self.timeStart = str(datetime.now().replace(microsecond=0)).replace(" ","_").replace(":","-")
         self.rolloutPolicyType = rolloutPolicy
         self.valuePolivyType = valuePolicy
         self.simInterface = interface
@@ -94,7 +96,7 @@ class MCTSHandler:
                     self.mcts.trainRolloutPolicyAtRoot()
                     self.mcts.trainValuePolicyOnTree()
             if self.saveModel:
-                self.mcts.saveModel(self.interface, self.rolloutPolicyType, self.valuePolivyType)
+                self.mcts.saveModel(self.interface, self.rolloutPolicyType, self.valuePolivyType, self.timeStart)
         if self.plotBest:
             self.plotResult()
         print([round(x,4) for x in self.bestActionSeedTrace])
@@ -129,10 +131,10 @@ class MCTSHandler:
             self.maxReward = totalReward
             self.bestActionSeedTrace = actionSeedTrace
             if self.interface == "zeabuz":
-                self.simInterface.saveLast()
+                self.simInterface.saveLast(totalReward, actionSeedTrace, self.timeStart)
             if self.verbose:
-                return True
                 resultPrint(totalReward, iterationNr, [round(x,2) for x in actionSeedTrace])
+            return True
         return False
         # if self.verbose:  # REVIEW: I overkant?
         #     if iterationNr%self.verboseInterval == 0:

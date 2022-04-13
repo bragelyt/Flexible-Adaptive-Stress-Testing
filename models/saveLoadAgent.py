@@ -3,8 +3,8 @@ import json
 from models.neuralNet import NetworkPolicy
 from shutil import copyfile
 
-def LoadModel(fileName) -> NetworkPolicy:
-    networkSaveLocation = "./saved_models/"
+def LoadModel(simType, fileName) -> NetworkPolicy:
+    networkSaveLocation = f"./saved_models/{simType}/"
     path = networkSaveLocation+fileName
     with open(path+"_parameters.json") as f:
         load = json.load(f)
@@ -24,11 +24,11 @@ def LoadModel(fileName) -> NetworkPolicy:
         lossFunction=lossFunction
     )
 
-def SaveNetwork(model, fileName) -> None:
+def SaveNetwork(model, simType, fileName, suffix) -> None:
     network = model.neuralNet
     networkType = model.networkType
-    networkSaveLocation = "./saved_models/"
-    path = networkSaveLocation+fileName
+    networkSaveLocation = f"./saved_models/{simType}/"
+    path = networkSaveLocation+fileName+suffix
     torch.save(network, path)
     copyParameterFile(path + "_parameters.json", networkType)
     print("Saved network", fileName)

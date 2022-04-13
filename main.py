@@ -27,13 +27,13 @@ def zeabuz():
         loadModel = True, 
         saveModel = True, 
         train = True)
-    mctsHandler.buildDescendingTree(200)
+    mctsHandler.buildDescendingTree(5)
 
 def zeabuzPlotter():
     zSim = ZeabuzSimInterface("over_turn_scenario", mode="Noise")
-    zSim.plotSavedPath("LastSim", rate = 20, borders = True, noise=False)
+    zSim.plotSavedPath("Crash4000", rate = 20, borders = True, noise=False)
 
 if __name__ == "__main__":
     # simple()
-    # zeabuz()
-    zeabuzPlotter()
+    zeabuz()
+    # zeabuzPlotter()

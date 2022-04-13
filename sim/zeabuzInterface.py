@@ -1,4 +1,5 @@
 import math, json
+from datetime import datetime
 
 from sim.adversarialRouter import AdversarialRouter
 
@@ -145,8 +146,12 @@ class ZeabuzSimInterface:
             else:
                 return -self.d*50  # Needs tuning
 
-    def saveLast(self, fileName = "LastSim"):
+    def saveLast(self, reward, actionSeed, suffix):
+        fileName = f"zeabuz{self.mode}{suffix}"
         print("Saving as", fileName)
+        data = {"Reward": reward, "ActionSeedTrace": actionSeed}
+        with open("simLogs/" + fileName + ".json", 'w') as f:
+            json.dump(data, f, indent=4)
         self.sim.save(fileName)
     
     def plotSavedPath(self, fileName = "LastSim", rate = 20.0, borders = False, noise = True):  # TODO: Pull sim stats out to params.

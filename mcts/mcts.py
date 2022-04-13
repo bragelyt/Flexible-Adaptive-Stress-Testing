@@ -32,7 +32,7 @@ class MCTS:
         if rolloutType is not None:
             if interface is not None:
                 try:
-                    self.rolloutPolicy = LoadModel(interface + rolloutType) # REVIEW: , batchSize=20)  
+                    self.rolloutPolicy = LoadModel(interface, rolloutType) # REVIEW: , batchSize=20)  
                 except:
                     print(f"Rollout policy {interface + rolloutType} not found or loaded. New model initiated")
                     interface = None
@@ -41,7 +41,7 @@ class MCTS:
         if valuePolicy is not None:
             if interface is not None:
                 try:
-                    self.valuePolicy = LoadModel(interface + valuePolicy) # , batchSize=20)
+                    self.valuePolicy = LoadModel(interface, valuePolicy) # , batchSize=20)
                 except:
                     print(f"Value policy {interface + rolloutType} not found or loaded. New model initiated")
                     interface = None
@@ -125,11 +125,11 @@ class MCTS:
             if summedActions >= roulette:
                 return random.random()/len(distPrediction) + index/len(distPrediction)  # TODO: Make pretty
     
-    def saveModel(self, interface, rolloutType, valueType):
+    def saveModel(self, interface, rolloutType, valueType, suffix):
         if self.rolloutType is not None:
-            SaveNetwork(self.rolloutPolicy, interface + rolloutType)
+            SaveNetwork(self.rolloutPolicy, interface, rolloutType, suffix)
         if self.valuePolicy is not None:
-            SaveNetwork(self.valuePolicy, interface + valueType)
+            SaveNetwork(self.valuePolicy, interface, valueType, suffix)
 
     def addNodeToTrainingBatch(self, state):
         target = self.rootNode.getChildDistribution(nrOfBuckets = 10)

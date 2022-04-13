@@ -11,3 +11,6 @@
 #             print(random.random()/len(distPrediction) + index/len(distPrediction))  # TODO: Make pretty
 #             break
 
+from datetime import date, datetime
+
+print(str(datetime.now().replace(microsecond=0)).replace(" ","-"))
