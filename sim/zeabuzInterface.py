@@ -146,10 +146,10 @@ class ZeabuzSimInterface:
             else:
                 return -self.d*50  # Needs tuning
 
-    def saveLast(self, reward, actionSeed, suffix):
+    def saveLast(self, reward, actionSeed, suffix, iterationNr):
         fileName = f"zeabuz{self.mode}{suffix}"
         print("Saving as", fileName)
-        data = {"Reward": reward, "ActionSeedTrace": actionSeed}
+        data = {"Reward": reward, "ActionSeedTrace": actionSeed, "Iteration": iterationNr}
         with open("simLogs/" + fileName + ".json", 'w') as f:
             json.dump(data, f, indent=4)
         self.sim.save(fileName)

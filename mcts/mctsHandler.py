@@ -56,17 +56,17 @@ class MCTSHandler:
             self.plotResult()
         return(self.bestActionSeedTrace)
 
-    def buildDescendingTree(self, loopsPrRoot) -> List[double]:  # MCTS should keep track of root
+    def buildDescendingTree(self, nrOfTrees, treeDepth, loopsPrRoot) -> List[double]:  # MCTS should keep track of root
         self.maxReward = -math.inf
         self.bestActionSeedTrace = None
         # rewards = []  # REVIEW: Should be looked at, but rewards are probably correct
-        for h in range(100):
+        for h in range(nrOfTrees):
             print(f'\033[94m--------- Iteration {h} ----------\033[0m')
             root = self.mcts.reset()
             simState = []
             self.simInterface.resetSim()
             root.stateRepresentation = self.simInterface.getStateRepresentation()
-            for i in range(18):
+            for i in range(treeDepth):
                 maxReward = -1000
                 cumReward = 0
                 self.simInterface.setState(simState)
@@ -131,7 +131,7 @@ class MCTSHandler:
             self.maxReward = totalReward
             self.bestActionSeedTrace = actionSeedTrace
             if self.interface == "zeabuz":
-                self.simInterface.saveLast(totalReward, actionSeedTrace, self.timeStart)
+                self.simInterface.saveLast(totalReward, actionSeedTrace, self.timeStart, iterationNr)
             if self.verbose:
                 resultPrint(totalReward, iterationNr, [round(x,2) for x in actionSeedTrace])
             return True

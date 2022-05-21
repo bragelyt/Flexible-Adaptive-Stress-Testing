@@ -12,10 +12,10 @@ def simple():
         verbose=True, 
         rolloutPolicy = "SimpleRollout", 
         valuePolicy = "SimpleValue",
-        loadModel = True, 
-        saveModel = True, 
-        train = True)
-    mctsHandler.buildDescendingTree(250)
+        loadModel = False, 
+        saveModel = False, 
+        train = False)
+    mctsHandler.buildDescendingTree(nrOfTrees= 30, treeDepth= 18, loopsPrRoot= 500)
 
 def zeabuz():
     zSim = ZeabuzSimInterface("over_turn_scenario", mode="Delay", route=True, steerablePaths = "turn_left")
@@ -27,13 +27,13 @@ def zeabuz():
         loadModel = True, 
         saveModel = True, 
         train = True)
-    mctsHandler.buildDescendingTree(5)
+    mctsHandler.buildDescendingTree(10, 18, 5)
 
 def zeabuzPlotter():
     zSim = ZeabuzSimInterface("over_turn_scenario", mode="Noise")
-    zSim.plotSavedPath("Crash4000", rate = 20, borders = True, noise=False)
+    zSim.plotSavedPath("300322Delay36h", rate = 20, borders = True, noise=False)
 
 if __name__ == "__main__":
-    # simple()
-    zeabuz()
+    simple()
+    # zeabuz()
     # zeabuzPlotter()
