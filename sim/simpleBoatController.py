@@ -27,7 +27,6 @@ class SimpleBoatController:
         self.crash_distance_threshold = params["crash_distance_threshold"]
         self.action_range = params["action_range"]
         self.resetSim()
-    
 
     def resetSim(self):
         with open("parameters.json") as f:

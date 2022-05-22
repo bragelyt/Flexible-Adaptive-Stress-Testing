@@ -43,6 +43,13 @@ class SimInterface:
     def getActionSeedTrace(self) -> List:
         return(self.actionSeedTrace)
     
+    def getStateRepresentation(self):  # Everything is (mostly) normalized [0,1] -> Straight X, steer x,y, steer heading vector x,y 
+        straightPos = [self.simWorld.straightPos[0]/100]
+        steerablePos = [x/100 for x in self.simWorld.steerablePos]
+        steerableHeading = [(math.sin(self.simWorld.steerableangle)/2)+0.5, (math.cos(self.simWorld.steerableangle)/2)+0.5]
+        stateRepresentation = straightPos + steerablePos + steerableHeading
+        return stateRepresentation  # Size 5
+
     def setState(self, state) -> None:
         self.resetSim()
         for actionSeed in state:

@@ -1,13 +1,10 @@
+import math, json
+from datetime import datetime
 
-from re import X
-import random, json
-from af_colav_sim import Simulation
 from sim.adversarialRouter import AdversarialRouter
-import numpy as np
-import matplotlib.pyplot as plt
-from af_colav_sim.data_utils import pack_array
+
+from af_colav_sim import Simulation
 from af_colav_sim.plotting.scenario_plotter import ScenarioPlotter
-import math
 
 
 class ZeabuzSimInterface:
@@ -48,17 +45,24 @@ class ZeabuzSimInterface:
         for actionSeed in state:
             self.step(actionSeed)
     
+    def getStateRepresentation(self):
+        xx = self.sim.sim_state.xx
+        zeabuzPos = xx[-1][0:3]
+        adversaryPos = xx[-1][13:16]
+        stateRepresentation = list(zeabuzPos) + list(adversaryPos)
+        return stateRepresentation
+
     def step(self, actionSeed):
         if self.route:
             for router in self.routers:
                 router.step()
         self.actionSeedTrace.append(actionSeed)
         if self.mode == "Steer":  # Steer and route not compatible yet. Could be fixed so that steer is path noise added on top of steer.
-            return self.steerStep(actionSeed)
+            return self.steerStep(actionSeed) * 10
         elif self.mode == "Delay":
-            return self.delayStep(actionSeed)
+            return self.delayStep(actionSeed) * 10
         elif self.mode == "Noise":
-            return self.noiseStep(actionSeed)
+            return self.noiseStep(actionSeed) * 10
     
     def steerStep(self, actionSeed):
         nu_d = [1., 0., self._getActionFromSeed(actionSeed)]
@@ -82,7 +86,7 @@ class ZeabuzSimInterface:
             self._updateDistance()
             if self.terminal:
                 break
-        return -actionSeed*0.5 + math.log(p)# REVIEW: (log(1-x) might work)
+        return - actionSeed*0.5 + math.log(p)# REVIEW: (log(1-x) might work)
     
     def noiseStep(self, actionSeed):
         noiseRanges = [[-0.5, 0.5], [-0.5, 0.5], [-0.5, 0.5], [-0.5, 0.5]] # pos: N, E, acceleration: N, E. 10 pos = 1 acce
@@ -142,8 +146,12 @@ class ZeabuzSimInterface:
             else:
                 return -self.d*50  # Needs tuning
 
-    def saveLast(self, fileName = "LastSim"):
+    def saveLast(self, reward, actionSeed, suffix, iterationNr):
+        fileName = f"zeabuz{self.mode}{suffix}"
         print("Saving as", fileName)
+        data = {"Reward": reward, "ActionSeedTrace": actionSeed, "Iteration": iterationNr}
+        with open("simLogs/" + fileName + ".json", 'w') as f:
+            json.dump(data, f, indent=4)
         self.sim.save(fileName)
     
     def plotSavedPath(self, fileName = "LastSim", rate = 20.0, borders = False, noise = True):  # TODO: Pull sim stats out to params.
