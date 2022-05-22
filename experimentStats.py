@@ -21,14 +21,11 @@ from datetime import datetime
 # with open("fileName.json", 'w') as f:
 #     json.dump(dataDict, f, indent=4)
 
-fileNames = ["200normalStats.json", "200trainStats.json"]
+fileNames = ["51of200normalStats", "60of200trainStats"]
 
 for fileName in fileNames:
-    print("---------")
-    print(fileName)
-    print("---------")
 
-    with open(fileName, 'r') as f:
+    with open(fileName+".json", 'r') as f:
         normal200 = json.load(f)
 
     depthDict = {}
@@ -54,7 +51,6 @@ for fileName in fileNames:
             globalBest = localBest
             bestTrace = localBestTrace
 
-    print("avg:", sum(avgs)/len(avgs))
 
     for i, itt in normal200.items():
         for depth in itt:
@@ -65,15 +61,12 @@ for fileName in fileNames:
                 depthDict[int(depth)] += 1
                 break
 
-    print("globalBest", globalBest)
 
     outStr = ""
     for i in range(18):
         if i in depthDict.keys():
             outStr += f"{i}: {depthDict[i]}, "
 
-    print("---------")
-    print("failureDepths", outStr)
 
     cumSum=0
     avgDepth = 0
@@ -81,16 +74,24 @@ for fileName in fileNames:
         cumSum += value
         avgDepth += value * i
 
+
+    # AVG best reward
+    # Avg crash reward
+    
+    print("---------")
+    print(fileName)
+    print("---------")
+    print("avg:", sum(avgs)/len(avgs))
+    print("globalBest", globalBest)
+    print("AvgBestReward", sum(bestPrDepth)/len(bestPrDepth))
+    print("AvgBestCrashReward", sum(bestCrashPrDepth)/len(bestCrashPrDepth))
+    print("---------")
+    print("failureDepths", outStr)
     print("avg depth", avgDepth/cumSum)
     print("failures found", cumSum)
     print("---------")
     print("bestTrace", bestTrace)
     print("---------")
     print("best indexes", len(bestIndex), bestIndex)
-
-    # AVG best reward
-    # Avg crash reward
-    print("____AvgBestReward", sum(bestPrDepth)/len(bestPrDepth))
-    print("____AvgBestCrashReward", sum(bestCrashPrDepth)/len(bestCrashPrDepth))
 
 # print(normal200["1"]["18"])

@@ -10,7 +10,7 @@ def simpleNoTrain():
     mctsHandler = MCTSHandler(
         bSim, 
         plotBest=False, 
-        verbose=False, 
+        verbose=True, 
         rolloutPolicy = "SimpleRollout", 
         valuePolicy = "SimpleValue",
         loadModel = False, 
@@ -25,12 +25,27 @@ def simpleTrain():
     mctsHandler = MCTSHandler(
         bSim, 
         plotBest=False, 
-        verbose=False, 
+        verbose=True, 
         rolloutPolicy = "SimpleRollout", 
         valuePolicy = "SimpleValue",
         loadModel = False, 
         saveModel = True, 
         train = True)
+    mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 500)
+    return(datetime.now()-start)
+
+def simpleLoad():
+    start = datetime.now()
+    bSim = SimInterface()
+    mctsHandler = MCTSHandler(
+        bSim, 
+        plotBest=False, 
+        verbose=True, 
+        rolloutPolicy = "SimpleRollout", 
+        valuePolicy = "SimpleValue",
+        loadModel = True, 
+        saveModel = False, 
+        train = False)
     mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 500)
     return(datetime.now()-start)
 
