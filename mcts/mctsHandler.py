@@ -59,9 +59,11 @@ class MCTSHandler:
     def buildDescendingTree(self, nrOfTrees, treeDepth, loopsPrRoot) -> List[double]:  # MCTS should keep track of root
         self.maxReward = -math.inf
         self.bestActionSeedTrace = None
+        self.stats = {}
         # rewards = []  # REVIEW: Should be looked at, but rewards are probably correct
         for h in range(nrOfTrees):
             print(f'\033[94m--------- Iteration {h} ----------\033[0m')
+            self.stats[h] = {}
             root = self.mcts.reset()
             simState = []
             self.simInterface.resetSim()
@@ -84,12 +86,14 @@ class MCTSHandler:
                         self.simInterface.setState(simState)
                         self.mcts.addNodeToTrainingBatch(self.simInterface.getStateRepresentation())
                 nextAction = self.mcts.setNextRoot()
+                self.stats[h][i] = {"maxReward": maxReward, "avg": cumReward / loopsPrRoot, "route": bestPath}
                 if nextAction is None:
                     break
                 else:
                     simState.append(nextAction)
                 # print(simState)
-                rootPrint(i, maxReward, bestPath, cumReward / loopsPrRoot, self.simInterface.getStateRepresentation()[0], self.mcts.rolloutPolicy.getPrediction(self.simInterface.getStateRepresentation()), isBest)
+                if self.verbose:
+                    rootPrint(i, maxReward, bestPath, cumReward / loopsPrRoot, self.simInterface.getStateRepresentation()[0], self.mcts.rolloutPolicy.getPrediction(self.simInterface.getStateRepresentation()), isBest)
             if self.rolloutPolicyType is not None:
                 print(f'\033[94m--------- Training {h} ----------\033[0m')
                 if self.train:
@@ -97,6 +101,12 @@ class MCTSHandler:
                     self.mcts.trainValuePolicyOnTree()
             if self.saveModel:
                 self.mcts.saveModel(self.interface, self.rolloutPolicyType, self.valuePolivyType, self.timeStart)
+            if self.train:
+                fileName = "trainStats.json"
+            else:
+                fileName = "normalStats.json"
+            with open(fileName, 'w') as f:
+                    json.dump(self.stats, f, indent=4)
         if self.plotBest:
             self.plotResult()
         print([round(x,4) for x in self.bestActionSeedTrace])

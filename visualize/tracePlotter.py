@@ -1,4 +1,3 @@
-from timeit import repeat
 from sim.simInterface import SimInterface
 import matplotlib.pyplot as plt
 from matplotlib import animation
