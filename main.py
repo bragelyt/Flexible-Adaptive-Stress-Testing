@@ -25,7 +25,7 @@ def simpleTrain():
     mctsHandler = MCTSHandler(
         bSim, 
         plotBest=False, 
-        verbose=True, 
+        verbose=False, 
         rolloutPolicy = "SimpleRollout", 
         valuePolicy = "SimpleValue",
         loadModel = False, 
@@ -40,7 +40,7 @@ def simpleLoad():
     mctsHandler = MCTSHandler(
         bSim, 
         plotBest=False, 
-        verbose=True, 
+        verbose=False, 
         rolloutPolicy = "SimpleRollout", 
         valuePolicy = "SimpleValue",
         loadModel = True, 
