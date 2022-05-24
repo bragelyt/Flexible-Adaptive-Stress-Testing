@@ -21,7 +21,7 @@ from datetime import datetime
 # with open("fileName.json", 'w') as f:
 #     json.dump(dataDict, f, indent=4)
 
-fileNames = ["51of200normalStats", "60of200trainStats"]
+fileNames = ["loadfullNNStats", "fullNNstats", "rolloutPolicyStats", "valuePolicyStats", "noNetworkStats"]
 
 for fileName in fileNames:
 
@@ -33,20 +33,30 @@ for fileName in fileNames:
     globalBest = -150
     bestPrDepth = []
     bestCrashPrDepth = []
+    bestDepths = {}
+    bestCrashDepths = {}
     avgs = []
     for i, itt in normal200.items():
         localBest = -150
+        bestDepth = None
         for depth in itt:
             depthBest = itt[depth]["maxReward"]
             depthAvg = itt[depth]["avg"]
             avgs.append(depthAvg)
             if localBest < depthBest:
+                bestDepth = int(depth)
                 localBest = depthBest
                 localBestTrace = itt[depth]["route"]
         bestPrDepth.append(localBest)
+        if bestDepth not in bestDepths.keys():
+            bestDepths[bestDepth] = 0
+        bestDepths[bestDepth] += 1
         if localBest > 0:
             bestIndex.append(int(i))
             bestCrashPrDepth.append(localBest)
+            if bestDepth not in bestCrashDepths:
+                bestCrashDepths[bestDepth] = 0
+            bestCrashDepths[bestDepth] += 1
         if localBest > globalBest:
             globalBest = localBest
             bestTrace = localBestTrace
@@ -61,36 +71,69 @@ for fileName in fileNames:
                 depthDict[int(depth)] += 1
                 break
 
-
-    outStr = ""
+    firstFailureDepth = ""
     for i in range(18):
         if i in depthDict.keys():
-            outStr += f"{i}: {depthDict[i]}, "
+            firstFailureDepth += f"{i}: {depthDict[i]}, "
 
+    # sum = 0
+    depthBestCrash = ""
+    for i in range(18):
+        if i in bestCrashDepths.keys():
+            depthBestCrash += f"{i}: {bestCrashDepths[i]}, "
+            # sum += bestCrashDepths[i]
+    # print("crashes", sum)
+    
+    # sum = 0
+    depthBest = ""
+    for i in range(18):
+        if i in bestDepths.keys():
+            depthBest += f"{i}: {bestDepths[i]}, "
+            # sum += bestDepths[i]
+    # print("200", sum)
 
-    cumSum=0
+    nrOfCrashes=0
     avgDepth = 0
     for i, value in depthDict.items():
-        cumSum += value
+        nrOfCrashes += value
         avgDepth += value * i
+    avgDepth = avgDepth/nrOfCrashes
 
+    nrOfBestCrashes=0
+    avgBestCrashDepth = 0
+    for i, value in depthDict.items():
+        nrOfBestCrashes += value
+        avgBestCrashDepth += value * i
+    avgBestCrashDepth = avgBestCrashDepth/nrOfBestCrashes
+    
+    nrOfLoops=0
+    avgBestDepth = 0
+    for i, value in bestDepths.items():
+        nrOfLoops += value
+        avgBestDepth += value * i
+    avgBestDepth = avgBestDepth/nrOfLoops
 
     # AVG best reward
     # Avg crash reward
     
+
     print("---------")
-    print(fileName)
+    print(fileName, nrOfCrashes, nrOfBestCrashes, nrOfLoops)
     print("---------")
-    print("avg:", sum(avgs)/len(avgs))
-    print("globalBest", globalBest)
-    print("AvgBestReward", sum(bestPrDepth)/len(bestPrDepth))
-    print("AvgBestCrashReward", sum(bestCrashPrDepth)/len(bestCrashPrDepth))
+    print("failures found", nrOfCrashes)
+    print("total avg reward:", sum(avgs)/len(avgs))
+    print("global best reward", globalBest)
+    print("avg best reward of trees", sum(bestPrDepth)/len(bestPrDepth))
+    print("avg best reward when E of trees", sum(bestCrashPrDepth)/len(bestCrashPrDepth))
     print("---------")
-    print("failureDepths", outStr)
-    print("avg depth", avgDepth/cumSum)
-    print("failures found", cumSum)
+    print("avg depth of first crash", avgDepth/nrOfCrashes)
+    print("avg depth of best:", avgBestDepth)
+    print("avg depth of best when E:", avgBestCrashDepth)
+    print("depth of first failures:", firstFailureDepth)
+    print("dephts of bests:", depthBest)
+    print("depths of best failures:", depthBestCrash)
     print("---------")
-    print("bestTrace", bestTrace)
+    print("best trace", bestTrace)
     print("---------")
     print("best indexes", len(bestIndex), bestIndex)
 
