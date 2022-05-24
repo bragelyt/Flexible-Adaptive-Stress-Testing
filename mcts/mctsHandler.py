@@ -60,7 +60,21 @@ class MCTSHandler:
         print(self.maxReward)
         if self.plotBest:
             self.plotResult()
-        return(self.bestActionSeedTrace)
+        return(self.bestActionSeedTrace, self.maxReward)
+
+    def buildMultipleSingleTree(self, nrOfTrees, loops):
+        cumReward = 0
+        stats = {}
+        for h in range(nrOfTrees):
+            self.mcts = MCTS(None, None, None)
+            stats[h] = {}
+            actionTrace, reward = self.buildSingleTree(loops)
+            cumReward += reward
+            stats[h] = {"maxReward": reward, "route": str(actionTrace)}
+            with open("multipleSingleTrees.json", 'w') as f:
+                json.dump(stats, f, indent=4)
+        
+            
 
     def buildDescendingTree(self, nrOfTrees, treeDepth, loopsPrRoot) -> List[double]:  # MCTS should keep track of root
         self.maxReward = -math.inf
@@ -132,7 +146,7 @@ class MCTSHandler:
         #  Selection and progressive widening  #
         p = None
         while not self.mcts.isAtLeafNode() and not self.simInterface.isTerminal():
-            nextNode = self.mcts.selectNextNode(self.simInterface.getStateRepresentation())
+            nextNode = self.mcts.selectNextNode(self.simInterface.getStateRepresentation())  # REVIEW: Hva faen?
             actionSeed = nextNode.action
             p = self.simInterface.step(actionSeed)
             nextNode.stateRepresentation = self.simInterface.getStateRepresentation()

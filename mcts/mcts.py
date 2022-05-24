@@ -56,6 +56,7 @@ class MCTS:
             params = json.load(f)   # Pass out to controller
         self.k = params["expansion_coefficient"]
         self.a = params["expansion_exponentioal"]
+        self.explorationCoefficient = params["exploration_coefficient"]
         self.MCT : Dict[tuple, TreeNode] = {}
 
 # ~~~ Selection and progressive widening ~~ #
@@ -188,7 +189,7 @@ class MCTS:
             # prediction =  stateRepresentation + [child.action]
             if self.valuePolicy is not None:
                 prediction = self.valuePolicy.getPrediction(stateRepresentation + [child.action])[0]
-                x = 0.6 * child.evaluation + self.currentNode.explorationCoefficient*(math.sqrt(math.log(self.currentNode.timesVisited)/(1+child.timesVisited))) + 0.4*prediction
+                x = 0.6 * child.evaluation + self.explorationCoefficient*(math.sqrt(math.log(self.currentNode.timesVisited)/(1+child.timesVisited))) + 0.4*prediction
             else:
                 x = child.evaluation + self.currentNode.explorationCoefficient*(math.sqrt(math.log(self.currentNode.timesVisited)/(1+child.timesVisited)))
             if x > maxValue:

@@ -12,17 +12,14 @@ class TreeNode:
         self.timesVisited = 0  # Initiates only after visit so should be one
         self.evaluation = 0
         self.stepReward = None
+        self.children : Dict[int, TreeNode] = {}  # SeedAction, node
         self.stateRepresentation = None
         if self.action == None:
             self.stepReward = 0
         else:
             self.evaluation = 0
-        self.children : Dict[int, TreeNode] = {}  # SeedAction, node
         # self.childrenVisits : Dict[tuple, int] = {}  # ChildNodeState, nrOfVisits  # TODO: Change childNodeState to treeNode
         # self.childrenEvaluations : Dict[tuple, tuple] = {}
-        with open("parameters.json") as f:
-            params = json.load(f)  # Pass out to main?
-        self.explorationCoefficient = params["exploration_coefficient"]
     
     def visitNode(self):
         self.timesVisited += 1

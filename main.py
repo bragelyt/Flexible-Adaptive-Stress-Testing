@@ -11,7 +11,17 @@ def noNNSimple():
         bSim, 
         plotBest=False, 
         verbose=False)
-    mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 500)
+    mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 200)
+    return(datetime.now()-start)
+
+def simpleSingleTree():
+    start = datetime.now()
+    bSim = SimInterface()
+    mctsHandler = MCTSHandler(
+        bSim, 
+        plotBest=False, 
+        verbose=False)
+    mctsHandler.buildMultipleSingleTree(200, 3600)
     return(datetime.now()-start)
 
 def rolloutNNSimple():
@@ -26,7 +36,7 @@ def rolloutNNSimple():
         loadModel = False, 
         saveModel = True, 
         train = True)
-    mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 500)
+    mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 200)
     return(datetime.now()-start)
 
 def valueNNSimple():
@@ -41,7 +51,7 @@ def valueNNSimple():
         loadModel = False, 
         saveModel = True, 
         train = True)
-    mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 500)
+    mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 200)
     return(datetime.now()-start)
 
 def fullNNSimple():
@@ -56,7 +66,7 @@ def fullNNSimple():
         loadModel = False, 
         saveModel = True, 
         train = True)
-    mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 500)
+    mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 200)
     return(datetime.now()-start)
 
 def loadNNSimple():
@@ -91,13 +101,15 @@ def zeabuzPlotter():
     zSim.plotSavedPath("300322Delay36h", rate = 20, borders = True, noise=False)
 
 if __name__ == "__main__":
-    noNNTime = noNNSimple()
-    rolloutTime = rolloutNNSimple()
-    valueTime = valueNNSimple()
-    fullNNTime = fullNNSimple()
-    loadNNTime = loadNNSimple()
-    print("noNNTime", noNNTime)
-    print("rolloutTime", rolloutTime)
-    print("valueTime", valueTime)
-    print("fullNNTime", fullNNTime)
-    print("loadNNTime", loadNNTime)
+    simpleSingle = simpleSingleTree()
+    # noNNTime = noNNSimple()
+    # rolloutTime = rolloutNNSimple()
+    # valueTime = valueNNSimple()
+    # fullNNTime = fullNNSimple()
+    # loadNNTime = loadNNSimple()
+    print("simpleSingle", simpleSingle)
+    # print("noNNTime", noNNTime)
+    # print("rolloutTime", rolloutTime)
+    # print("valueTime", valueTime)
+    # print("fullNNTime", fullNNTime)
+    # print("loadNNTime", loadNNTime)

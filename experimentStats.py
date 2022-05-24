@@ -12,16 +12,12 @@
 #             print(random.random()/len(distPrediction) + index/len(distPrediction))  # TODO: Make pretty
 #             break
 
-import json, time
-
-from datetime import datetime
-
-
+import json
 
 # with open("fileName.json", 'w') as f:
 #     json.dump(dataDict, f, indent=4)
 
-fileNames = ["loadfullNNStats", "fullNNstats", "rolloutPolicyStats", "valuePolicyStats", "noNetworkStats"]
+fileNames = ["200noNetworkStats", "noNetworkStats"]#, "rolloutPolicyStats", "valuePolicyStats"]
 
 for fileName in fileNames:
 
@@ -126,7 +122,7 @@ for fileName in fileNames:
     print("avg best reward of trees", sum(bestPrDepth)/len(bestPrDepth))
     print("avg best reward when E of trees", sum(bestCrashPrDepth)/len(bestCrashPrDepth))
     print("---------")
-    print("avg depth of first crash", avgDepth/nrOfCrashes)
+    print("avg depth of first crash", avgDepth)
     print("avg depth of best:", avgBestDepth)
     print("avg depth of best when E:", avgBestCrashDepth)
     print("depth of first failures:", firstFailureDepth)
