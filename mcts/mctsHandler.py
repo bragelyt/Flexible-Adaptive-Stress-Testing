@@ -7,8 +7,14 @@ from datetime import datetime
 from mcts.mcts import MCTS
 from visualize.tracePlotter import TracePlotter
 
-def rootPrint(rootNr, maxReward, maxTrace , avgReward, state, pred, isBest):
+def rootPrint(rootNr, maxReward, maxTrace, avgReward, state, pred, isBest):
     text = f'rootDepth: {rootNr:2.0f} | max: {maxReward:8.4f} | avg: {avgReward:8.4f} | best: {str([round(x,2) for x in maxTrace]):126s} | pred: {state:.2f} {[round(x, 3) for x in pred]}'
+    if isBest:
+        text = '\033[93m' + text + '\033[0m'
+    print(text)
+
+def rootPrint(rootNr, maxReward, maxTrace , avgReward, isBest):
+    text = f'rootDepth: {rootNr:2.0f} | max: {maxReward:8.4f} | avg: {avgReward:8.4f} | best: {str([round(x,2) for x in maxTrace]):126s}'
     if isBest:
         text = '\033[93m' + text + '\033[0m'
     print(text)
@@ -93,7 +99,10 @@ class MCTSHandler:
                     simState.append(nextAction)
                 # print(simState)
                 if self.verbose:
-                    rootPrint(i, maxReward, bestPath, cumReward / loopsPrRoot, self.simInterface.getStateRepresentation()[0], self.mcts.rolloutPolicy.getPrediction(self.simInterface.getStateRepresentation()), isBest)
+                    if self.rolloutPolicyType is not None:
+                        rootPrint(i, maxReward, bestPath, cumReward / loopsPrRoot, self.simInterface.getStateRepresentation()[0], self.mcts.rolloutPolicy.getPrediction(self.simInterface.getStateRepresentation()), isBest)
+                    else:
+                        rootPrint(i, maxReward, bestPath, cumReward / loopsPrRoot, isBest)
             if self.rolloutPolicyType is not None:
                 print(f'\033[94m--------- Training {h} ----------\033[0m')
                 if self.train:
@@ -101,10 +110,17 @@ class MCTSHandler:
                     self.mcts.trainValuePolicyOnTree()
             if self.saveModel:
                 self.mcts.saveModel(self.interface, self.rolloutPolicyType, self.valuePolivyType, self.timeStart)
-            if self.train:
-                fileName = "trainStats.json"
-            else:
-                fileName = "normalStats.json"
+            fileName = ""
+            if self.loadModel:
+                fileName+="load"
+            if self.rolloutPolicyType is None and self.valuePolivyType is None:
+                fileName += "noNetworkStats.json"
+            elif self.rolloutPolicyType is None and self.valuePolivyType is not None:
+                fileName += "valuePolicyStats.json"
+            elif self.rolloutPolicyType is not None and self.valuePolivyType is None:
+                fileName += "rolloutPolicyStats.json"
+            elif self.rolloutPolicyType is not None and self.valuePolivyType is not None:
+                fileName += "fullNNStats.json"
             with open(fileName, 'w') as f:
                     json.dump(self.stats, f, indent=4)
         if self.plotBest:

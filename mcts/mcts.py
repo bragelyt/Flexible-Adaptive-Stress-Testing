@@ -27,6 +27,7 @@ class MCTS:
     
     def __init__(self, rolloutType, valuePolicy, interface) -> None:
         self.rolloutType = rolloutType
+        self.valuePolicy = valuePolicy
         self.reset()
         self.simIntefrace = SimInterface()
         if rolloutType is not None:
@@ -137,19 +138,21 @@ class MCTS:
             self.rolloutTrainingBatch.append([state, target])
 
     def trainRolloutPolicyAtRoot(self):
-        self.rolloutPolicy.trainOnBatch(self.rolloutTrainingBatch)
-        self.rolloutTrainingBatch = []
+        if self.rolloutPolicy is not None:
+            self.rolloutPolicy.trainOnBatch(self.rolloutTrainingBatch)
+            self.rolloutTrainingBatch = []
 
     def trainValuePolicyOnTree(self):
-        nodes = [self.originalRoot]
-        batch = []
-        while len(nodes) > 0:
-            node = nodes.pop(0)
-            for child in node.children.values():
-                nodes.append(child)
-                trainingValues = [node.stateRepresentation + [child.action], [node.evaluation]]
-                batch.append(trainingValues)
-        self.valuePolicy.trainOnBatch(batch)
+        if self.valuePolicy is not None:
+            nodes = [self.originalRoot]
+            batch = []
+            while len(nodes) > 0:
+                node = nodes.pop(0)
+                for child in node.children.values():
+                    nodes.append(child)
+                    trainingValues = [node.stateRepresentation + [child.action], [node.evaluation]]
+                    batch.append(trainingValues)
+            self.valuePolicy.trainOnBatch(batch)
 
 
     def backpropagate(self, reward) -> double:
@@ -183,8 +186,11 @@ class MCTS:
         for child in self.currentNode.children.values():
             # print(stateRepresentation)
             # prediction =  stateRepresentation + [child.action]
-            prediction = self.valuePolicy.getPrediction(stateRepresentation + [child.action])[0]
-            x = 0.6 * child.evaluation + self.currentNode.explorationCoefficient*(math.sqrt(math.log(self.currentNode.timesVisited)/(1+child.timesVisited))) + 0.4*prediction
+            if self.valuePolicy is not None:
+                prediction = self.valuePolicy.getPrediction(stateRepresentation + [child.action])[0]
+                x = 0.6 * child.evaluation + self.currentNode.explorationCoefficient*(math.sqrt(math.log(self.currentNode.timesVisited)/(1+child.timesVisited))) + 0.4*prediction
+            else:
+                x = child.evaluation + self.currentNode.explorationCoefficient*(math.sqrt(math.log(self.currentNode.timesVisited)/(1+child.timesVisited)))
             if x > maxValue:
                 bestChild = child
                 maxValue = x
