@@ -4,16 +4,7 @@ from sim.simInterface import SimInterface
 from sim.zeabuzInterface import ZeabuzSimInterface
 from datetime import datetime
 
-def noNNSimple():
-    start = datetime.now()
-    bSim = SimInterface()
-    mctsHandler = MCTSHandler(
-        bSim, 
-        plotBest=False, 
-        verbose=False)
-    mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 200)
-    return(datetime.now()-start)
-
+# Single tree
 def simpleSingleTree():
     start = datetime.now()
     bSim = SimInterface()
@@ -21,7 +12,18 @@ def simpleSingleTree():
         bSim, 
         plotBest=False, 
         verbose=False)
-    mctsHandler.buildMultipleSingleTree(200, 3600)
+    mctsHandler.buildMultipleSingleTree(500, 3600)
+    return(datetime.now()-start)
+
+# Periodic pruning
+def noNNSimple():
+    start = datetime.now()
+    bSim = SimInterface()
+    mctsHandler = MCTSHandler(
+        bSim, 
+        plotBest=False, 
+        verbose=False)
+    mctsHandler.buildDescendingTree(nrOfTrees= 500, treeDepth= 18, loopsPrRoot= 200)
     return(datetime.now()-start)
 
 def rolloutNNSimple():
@@ -36,7 +38,7 @@ def rolloutNNSimple():
         loadModel = False, 
         saveModel = True, 
         train = True)
-    mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 200)
+    mctsHandler.buildDescendingTree(nrOfTrees= 500, treeDepth= 18, loopsPrRoot= 200)
     return(datetime.now()-start)
 
 def valueNNSimple():
@@ -51,7 +53,7 @@ def valueNNSimple():
         loadModel = False, 
         saveModel = True, 
         train = True)
-    mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 200)
+    mctsHandler.buildDescendingTree(nrOfTrees= 500, treeDepth= 18, loopsPrRoot= 200)
     return(datetime.now()-start)
 
 def fullNNSimple():
@@ -66,22 +68,7 @@ def fullNNSimple():
         loadModel = False, 
         saveModel = True, 
         train = True)
-    mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 200)
-    return(datetime.now()-start)
-
-def loadNNSimple():
-    start = datetime.now()
-    bSim = SimInterface()
-    mctsHandler = MCTSHandler(
-        bSim, 
-        plotBest=False, 
-        verbose=False, 
-        rolloutPolicy = "SimpleRollout", 
-        valuePolicy = "SimpleValue",
-        loadModel = True, 
-        saveModel = False, 
-        train = False)
-    mctsHandler.buildDescendingTree(nrOfTrees= 200, treeDepth= 18, loopsPrRoot= 500)
+    mctsHandler.buildDescendingTree(nrOfTrees= 500, treeDepth= 18, loopsPrRoot= 200)
     return(datetime.now()-start)
 
 def zeabuz():
@@ -102,14 +89,13 @@ def zeabuzPlotter():
 
 if __name__ == "__main__":
     simpleSingle = simpleSingleTree()
-    # noNNTime = noNNSimple()
-    # rolloutTime = rolloutNNSimple()
-    # valueTime = valueNNSimple()
-    # fullNNTime = fullNNSimple()
-    # loadNNTime = loadNNSimple()
+    noNNTime = noNNSimple()
+    rolloutTime = rolloutNNSimple()
+    valueTime = valueNNSimple()
+    fullNNTime = fullNNSimple()
     print("simpleSingle", simpleSingle)
-    # print("noNNTime", noNNTime)
-    # print("rolloutTime", rolloutTime)
-    # print("valueTime", valueTime)
-    # print("fullNNTime", fullNNTime)
-    # print("loadNNTime", loadNNTime)
+    print("noNNTime", noNNTime)
+    print("rolloutTime", rolloutTime)
+    print("valueTime", valueTime)
+    print("fullNNTime", fullNNTime)
+    

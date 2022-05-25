@@ -57,7 +57,8 @@ class MCTSHandler:
             self.simInterface.resetSim()
             totalReward, actionSeedTrace = self.loop()
             self.saveBest(totalReward, actionSeedTrace, i)
-        print(self.maxReward)
+        if self.verbose:
+            print(self.maxReward)
         if self.plotBest:
             self.plotResult()
         return(self.bestActionSeedTrace, self.maxReward)
@@ -73,8 +74,6 @@ class MCTSHandler:
             stats[h] = {"maxReward": reward, "route": str(actionTrace)}
             with open("multipleSingleTrees.json", 'w') as f:
                 json.dump(stats, f, indent=4)
-        
-            
 
     def buildDescendingTree(self, nrOfTrees, treeDepth, loopsPrRoot) -> List[double]:  # MCTS should keep track of root
         self.maxReward = -math.inf

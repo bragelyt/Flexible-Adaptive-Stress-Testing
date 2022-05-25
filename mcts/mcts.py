@@ -191,7 +191,7 @@ class MCTS:
                 prediction = self.valuePolicy.getPrediction(stateRepresentation + [child.action])[0]
                 x = 0.6 * child.evaluation + self.explorationCoefficient*(math.sqrt(math.log(self.currentNode.timesVisited)/(1+child.timesVisited))) + 0.4*prediction
             else:
-                x = child.evaluation + self.currentNode.explorationCoefficient*(math.sqrt(math.log(self.currentNode.timesVisited)/(1+child.timesVisited)))
+                x = child.evaluation + self.explorationCoefficient*(math.sqrt(math.log(self.currentNode.timesVisited)/(1+child.timesVisited)))
             if x > maxValue:
                 bestChild = child
                 maxValue = x
