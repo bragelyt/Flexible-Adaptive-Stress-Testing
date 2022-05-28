@@ -17,11 +17,11 @@ import json
 # with open("fileName.json", 'w') as f:
 #     json.dump(dataDict, f, indent=4)
 
-fileNames = ["noNetworkStats"]#, "200noNetworkStats", "rolloutPolicyStats", "valuePolicyStats"]
+fileNames = ["fullNNstats", "rolloutPolicyStats", "valuePolicyStats", "noNetworkStats"]
 
 for fileName in fileNames:
 
-    with open(fileName+".json", 'r') as f:
+    with open("results/nnResults/fullRun/"+fileName+".json", 'r') as f:
         normal200 = json.load(f)
 
     depthDict = {}
@@ -97,7 +97,7 @@ for fileName in fileNames:
 
     nrOfBestCrashes=0
     avgBestCrashDepth = 0
-    for i, value in depthDict.items():
+    for i, value in bestCrashDepths.items():
         nrOfBestCrashes += value
         avgBestCrashDepth += value * i
     avgBestCrashDepth = avgBestCrashDepth/nrOfBestCrashes

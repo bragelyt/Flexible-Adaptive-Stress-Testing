@@ -2,9 +2,12 @@ import json, math
 
 for filename in ["multipleSingleTrees"]:
 
-    with open(filename+ ".json", 'r') as f:
-        stats = json.load(f)
+    # with open("results/nnResults/fullRun500Nodes/"+filename+ ".json", 'r') as f:
+    #     stats = json.load(f)
 
+    with open(filename+".json", "r") as f:
+        stats = json.load(f)
+        
     nrOfFailures = 0
     cumFailure = 0
     cumReward = 0

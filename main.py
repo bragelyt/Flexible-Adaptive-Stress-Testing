@@ -12,7 +12,7 @@ def simpleSingleTree():
         bSim, 
         plotBest=False, 
         verbose=False)
-    mctsHandler.buildMultipleSingleTree(500, 3600)
+    mctsHandler.buildMultipleSingleTree(1000, 9000)
     return(datetime.now()-start)
 
 # Periodic pruning
@@ -89,13 +89,13 @@ def zeabuzPlotter():
 
 if __name__ == "__main__":
     simpleSingle = simpleSingleTree()
-    noNNTime = noNNSimple()
-    rolloutTime = rolloutNNSimple()
-    valueTime = valueNNSimple()
-    fullNNTime = fullNNSimple()
+    # noNNTime = noNNSimple()
+    # rolloutTime = rolloutNNSimple()
+    # valueTime = valueNNSimple()
+    # fullNNTime = fullNNSimple()
     print("simpleSingle", simpleSingle)
-    print("noNNTime", noNNTime)
-    print("rolloutTime", rolloutTime)
-    print("valueTime", valueTime)
-    print("fullNNTime", fullNNTime)
+    # print("noNNTime", noNNTime)
+    # print("rolloutTime", rolloutTime)
+    # print("valueTime", valueTime)
+    # print("fullNNTime", fullNNTime)
     
