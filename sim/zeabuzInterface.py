@@ -1,6 +1,7 @@
-import math, json
+import math, json, copy
 from datetime import datetime
 
+import numpy as np
 from sim.adversarialRouter import AdversarialRouter
 
 from af_colav_sim import Simulation
@@ -19,6 +20,8 @@ class ZeabuzSimInterface:
             with open("scenarios/"+steerablePaths+".json", 'r') as f:
                 self.steerablePaths = json.load(f)
         self.resetSim()
+        print("Boink")
+        self.initialState = self.getInternalState()
         # self.order = len(self.controllers)  # TODO: Could be nice to add more boats. Need to refractor action to a touple
     
     def resetSim(self):
@@ -39,12 +42,52 @@ class ZeabuzSimInterface:
                     if controller.name == "SteerableVesselController":
                         router = AdversarialRouter(controller, self.steerablePaths[key])
                         self.routers.append(router)
-
+    
+    
+    def getInternalState(self):
+        internalState = {
+            "xx": copy.deepcopy(self.sim.sim_state.xx),
+            "dxdt": self.sim.sim_state.dxdt,
+            "t": copy.deepcopy(self.sim.sim_state.t),
+            "step_callback": self.sim.sim_state.step_callback,
+            
+            "d": self.d,
+            "terminal": self.terminal,
+            "episodeHeppened": self.episodeHeppened,
+            "lastActionSeed": self.lastActionSeed,
+            "actionSeedTrace": self.actionSeedTrace
+        }
+        return internalState
+    
     def setState(self, state) -> None:
+        start = datetime.now()
         self.resetSim()
+        # print("resetTime", datetime.now()-start)
+        # self.setInitialState()
+        # start = datetime.now()
         for actionSeed in state:
             self.step(actionSeed)
+        # print("zoomTime", datetime.now()-start)
     
+    def setSmartState(self, state) -> None:
+        self.setInternalState(self.initialState)
+        # start = datetime.now()
+        for actionSeed in state:
+            self.step(actionSeed)
+        # print("zoomTime", datetime.now()-start)
+
+    def setInternalState(self, internalState):
+        self.sim.sim_state.xx = internalState["xx"]
+        self.sim.sim_state.dxdt = internalState["dxdt"]
+        self.sim.sim_state.t = internalState["t"]
+        self.sim.sim_state.step_callback = internalState["step_callback"]
+
+        self.d = internalState["d"]
+        self.terminal = internalState["terminal"]
+        self.episodeHeppened = internalState["episodeHeppened"]
+        self.lastActionSeed = internalState["lastActionSeed"]
+        self.actionSeedTrace = internalState["actionSeedTrace"]
+
     def getStateRepresentation(self):
         xx = self.sim.sim_state.xx
         zeabuzPos = xx[-1][0:3]
@@ -147,14 +190,16 @@ class ZeabuzSimInterface:
                 return -self.d*50  # Needs tuning
 
     def saveLast(self, reward, actionSeed, suffix, iterationNr):
-        fileName = f"zeabuz{self.mode}{suffix}"
-        print("Saving as", fileName)
+        self.fileName = f"zeabuz{self.mode}{suffix}"
+        print("Saving as", self.fileName)
         data = {"Reward": reward, "ActionSeedTrace": actionSeed, "Iteration": iterationNr}
-        with open("simLogs/" + fileName + ".json", 'w') as f:
+        with open("simLogs/" + self.fileName + ".json", 'w') as f:
             json.dump(data, f, indent=4)
-        self.sim.save(fileName)
+        self.sim.save(self.fileName)
     
-    def plotSavedPath(self, fileName = "LastSim", rate = 20.0, borders = False, noise = True):  # TODO: Pull sim stats out to params.
+    def plotSavedPath(self, fileName = None, rate = 20.0, borders = False, noise = True):  # TODO: Pull sim stats out to params.
+        if fileName is None:
+            fileName = self.fileName
         simPlotter = ScenarioPlotter(fileName, rate = rate, plot_obs_est = noise, sp_vp = borders, metrics = False)
         simPlotter.run()
 

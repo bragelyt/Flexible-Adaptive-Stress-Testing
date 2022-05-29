@@ -71,31 +71,61 @@ def fullNNSimple():
     mctsHandler.buildDescendingTree(nrOfTrees= 500, treeDepth= 18, loopsPrRoot= 200)
     return(datetime.now()-start)
 
-def zeabuz():
+def zeabuzZoomState():
+    start = datetime.now()
     zSim = ZeabuzSimInterface("over_turn_scenario", mode="Delay", route=True, steerablePaths = "turn_left")
     mctsHandler = MCTSHandler(
         zSim, 
-        plotBest=False, 
-        rolloutPolicy = "ZeabuzRollout", 
-        valuePolicy = "ZeabuzValue",
-        loadModel = True, 
-        saveModel = True, 
-        train = True)
-    mctsHandler.buildDescendingTree(10, 18, 5)
+        verbose=False,
+        plotBest=False)
+        # rolloutPolicy = "ZeabuzRollout", 
+        # valuePolicy = "ZeabuzValue",
+        # loadModel = False, 
+        # saveModel = False, 
+        # train = True)
+    mctsHandler.buildDescendingTree(20, 22, 1, setInternalState=False)
+    return(datetime.now()-start)
+    
+def zeabuzInternalState():
+    start = datetime.now()
+    zSim = ZeabuzSimInterface("over_turn_scenario", mode="Delay", route=True, steerablePaths = "turn_left")
+    mctsHandler = MCTSHandler(
+        zSim, 
+        verbose=False,
+        plotBest=False,)
+        # rolloutPolicy = "ZeabuzRollout", 
+        # valuePolicy = "ZeabuzValue",
+        # loadModel = False, 
+        # saveModel = False, 
+        # train = True)
+    mctsHandler.buildDescendingTree(20, 22, 1, setInternalState=True)
+    return(datetime.now()-start)
 
-def zeabuzPlotter():
+def zeabuzPlotter(fileName):
     zSim = ZeabuzSimInterface("over_turn_scenario", mode="Noise")
-    zSim.plotSavedPath("300322Delay36h", rate = 20, borders = True, noise=False)
+    zSim.plotSavedPath(fileName, rate = 20, borders = True, noise=False)
 
 if __name__ == "__main__":
-    simpleSingle = simpleSingleTree()
+    # simpleSingle = simpleSingleTree()
     # noNNTime = noNNSimple()
     # rolloutTime = rolloutNNSimple()
     # valueTime = valueNNSimple()
     # fullNNTime = fullNNSimple()
-    print("simpleSingle", simpleSingle)
+    # print("simpleSingle", simpleSingle)
     # print("noNNTime", noNNTime)
     # print("rolloutTime", rolloutTime)
     # print("valueTime", valueTime)
-    # print("fullNNTime", fullNNTime)
+    # print("fullNNTime", fullNNTime) 
+
+    # ----- Zeabuz ------ #
+    internalState = None
+    zoomState = None
+    # internalState = zeabuzInternalState()
+    print("internalState", internalState)
+    zoomState = zeabuzZoomState()
+    print("internalState", internalState)
+    print("zoomState", zoomState)
     
+
+    # ------ Zeabuz plot ---- #
+    # ZP = zeabuzPlotter("zeabuzDelay2022-05-29_14-33-45")

@@ -7,13 +7,13 @@ from datetime import datetime
 from mcts.mcts import MCTS
 from visualize.tracePlotter import TracePlotter
 
-def rootPrint(rootNr, maxReward, maxTrace, avgReward, state, pred, isBest):
+def rootPrintNN(rootNr, maxReward, maxTrace, avgReward, state, pred, isBest):
     text = f'rootDepth: {rootNr:2.0f} | max: {maxReward:8.4f} | avg: {avgReward:8.4f} | best: {str([round(x,2) for x in maxTrace]):126s} | pred: {state:.2f} {[round(x, 3) for x in pred]}'
     if isBest:
         text = '\033[93m' + text + '\033[0m'
     print(text)
 
-def rootPrint(rootNr, maxReward, maxTrace , avgReward, isBest):
+def rootPrint(rootNr, maxReward, maxTrace, avgReward, isBest):
     text = f'rootDepth: {rootNr:2.0f} | max: {maxReward:8.4f} | avg: {avgReward:8.4f} | best: {str([round(x,2) for x in maxTrace]):126s}'
     if isBest:
         text = '\033[93m' + text + '\033[0m'
@@ -75,10 +75,12 @@ class MCTSHandler:
             with open("multipleSingleTrees.json", 'w') as f:
                 json.dump(stats, f, indent=4)
 
-    def buildDescendingTree(self, nrOfTrees, treeDepth, loopsPrRoot) -> List[double]:  # MCTS should keep track of root
+    def buildDescendingTree(self, nrOfTrees, treeDepth, loopsPrRoot, setInternalState = True) -> List[double]:  # MCTS should keep track of root
         self.maxReward = -math.inf
         self.bestActionSeedTrace = None
         self.stats = {}
+        cumLoopTime = datetime.now() -datetime.now()
+        simRunTimes = {}
         # rewards = []  # REVIEW: Should be looked at, but rewards are probably correct
         for h in range(nrOfTrees):
             print(f'\033[94m--------- Iteration {h} ----------\033[0m')
@@ -88,18 +90,40 @@ class MCTSHandler:
             self.simInterface.resetSim()
             root.stateRepresentation = self.simInterface.getStateRepresentation()
             for i in range(treeDepth):
-                maxReward = -1000
+                start = datetime.now()
+                maxReward = -math.inf
                 cumReward = 0
                 self.simInterface.setState(simState)
+                if setInternalState:
+                    internalState = self.simInterface.getInternalState()
+                    xxLen = len(internalState["xx"])
                 isBest = False
                 for j in range(loopsPrRoot):
-                    self.simInterface.setState(simState)
+                    if i not in simRunTimes.keys():
+                        simRunTimes[i] = []
+                    startLoop = datetime.now()
                     totalReward, actionSeedTrace = self.loop()
+                    # print(i, "LoopTime", datetime.now()-startLoop)
+                    # print(totalReward, len(actionSeedTrace))
+                    startZoom = datetime.now()
                     if totalReward > maxReward:
                         maxReward = totalReward
                         bestPath = actionSeedTrace
                     cumReward += totalReward
                     isBest = self.saveBest(totalReward, actionSeedTrace, j + loopsPrRoot*i) or isBest
+                    if setInternalState:
+                        if len(internalState["xx"]) != xxLen:
+                            out = ""
+                            for t in internalState["t"]:
+                                out += (str(round(t,1))) + ", "
+                            print(out)
+                        self.simInterface.setInternalState(internalState)
+                    else:
+                        self.simInterface.setState(simState)
+                    # print(i, "ZoomTime", datetime.now()-startZoom)
+                    cumLoopTime += datetime.now()-startLoop
+                    # print(i, (datetime.now()-startLoop).total_seconds())
+                    simRunTimes[i].append((datetime.now()-startLoop).total_seconds())
                 if self.rolloutPolicyType is not None:
                     if self.train:
                         self.simInterface.setState(simState)
@@ -113,9 +137,10 @@ class MCTSHandler:
                 # print(simState)
                 if self.verbose:
                     if self.rolloutPolicyType is not None:
-                        rootPrint(i, maxReward, bestPath, cumReward / loopsPrRoot, self.simInterface.getStateRepresentation()[0], self.mcts.rolloutPolicy.getPrediction(self.simInterface.getStateRepresentation()), isBest)
+                        rootPrintNN(i, maxReward, bestPath, cumReward / loopsPrRoot, self.simInterface.getStateRepresentation()[0], self.mcts.rolloutPolicy.getPrediction(self.simInterface.getStateRepresentation()), isBest)
                     else:
                         rootPrint(i, maxReward, bestPath, cumReward / loopsPrRoot, isBest)
+                # print(i, "FullRootTime" , datetime.now()-start)
             if self.rolloutPolicyType is not None:
                 print(f'\033[94m--------- Training {h} ----------\033[0m')
                 if self.train:
@@ -138,7 +163,10 @@ class MCTSHandler:
                     json.dump(self.stats, f, indent=4)
         if self.plotBest:
             self.plotResult()
-        print([round(x,4) for x in self.bestActionSeedTrace])
+        # print([round(x,4) for x in self.bestActionSeedTrace])
+        print("-----", cumLoopTime)
+        print(simRunTimes)
+        return
         return(self.bestActionSeedTrace)
 
     def loop(self) -> Tuple[double, double]:
@@ -166,6 +194,7 @@ class MCTSHandler:
         return(totalReward, actionSeedTrace)
 
     def saveBest(self, totalReward, actionSeedTrace, iterationNr):
+        return False
         if self.maxReward < totalReward:
             self.maxReward = totalReward
             self.bestActionSeedTrace = actionSeedTrace

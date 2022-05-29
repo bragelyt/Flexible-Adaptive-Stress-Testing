@@ -1,7 +1,7 @@
 # %%
 import matplotlib.pyplot as plt
 
-rootPruneIncrease = 1.5
+rootPruneIncrease = 1.85
 
 runtimeAdditions = {
     "Both NN": 0.008141,
@@ -18,27 +18,27 @@ for i in range(50000):
 
 # %%
 
-relativeRuntime = {}
+# relativeRuntime = {}
 
-for setup in runtimeAdditions:
-    relativeRuntime[setup] = []
-    for runtime in runtimes:
-        if setup == "MCTS-SA":
-            relativeRuntime[setup].append(1)
-        else:
-            addition = runtimeAdditions[setup]
-            RelativeR = rootPruneIncrease*runtime/(addition + runtime)
-            relativeRuntime[setup].append(RelativeR)
-    plt.plot(runtimes, relativeRuntime[setup])
+# for setup in runtimeAdditions:
+#     relativeRuntime[setup] = []
+#     for runtime in runtimes:
+#         if setup == "MCTS-SA":
+#             relativeRuntime[setup].append(1)
+#         else:
+#             addition = runtimeAdditions[setup]
+#             RelativeR = rootPruneIncrease*runtime/(addition + runtime)
+#             relativeRuntime[setup].append(RelativeR)
+#     plt.plot(runtimes, relativeRuntime[setup])
 
-plt.legend(list(runtimeAdditions.keys()), loc ='lower right')
+# plt.legend(list(runtimeAdditions.keys()), loc ='lower right')
 
-plt.xscale('log',base=10) 
-plt.xlabel('Simulation run time (sec)')
-plt.ylabel('Relative nr. of iterations over time')
-# plt.yscale('log',base=10) 
+# plt.xscale('log',base=10) 
+# plt.xlabel('Simulation run time (sec)')
+# plt.ylabel('Relative nr. of simulations over time')
+# # plt.yscale('log',base=10) 
 
-plt.show()
+# plt.show()
 
 # %%
 
