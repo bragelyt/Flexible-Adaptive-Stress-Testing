@@ -21,6 +21,7 @@ class TracePlotter:
             self.figObjs.append({"line": line, "scatterBorder": scatterBorder, "scatterInner": scatterInner})
         anim = animation.FuncAnimation(self.fig, self.animateFrame, 
                                     frames=len(self.posTraces[0])-1+self.startDelay, interval=self.frameDelay, repeat = False)
+        plt.title("North-East plot")
         plt.show()
 
     def animateFrame(self, i):

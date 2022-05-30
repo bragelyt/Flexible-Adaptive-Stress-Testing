@@ -163,10 +163,10 @@ class MCTSHandler:
                     json.dump(self.stats, f, indent=4)
         if self.plotBest:
             self.plotResult()
-        # print([round(x,4) for x in self.bestActionSeedTrace])
+        print([round(x,4) for x in self.bestActionSeedTrace])
         print("-----", cumLoopTime)
         print(simRunTimes)
-        return
+        # return
         return(self.bestActionSeedTrace)
 
     def loop(self) -> Tuple[double, double]:
@@ -194,7 +194,6 @@ class MCTSHandler:
         return(totalReward, actionSeedTrace)
 
     def saveBest(self, totalReward, actionSeedTrace, iterationNr):
-        return False
         if self.maxReward < totalReward:
             self.maxReward = totalReward
             self.bestActionSeedTrace = actionSeedTrace

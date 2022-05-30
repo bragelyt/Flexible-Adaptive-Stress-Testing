@@ -2,6 +2,7 @@ from __future__ import annotations
 from mcts.mctsHandler import MCTSHandler
 from sim.simInterface import SimInterface
 from sim.zeabuzInterface import ZeabuzSimInterface
+from visualize.tracePlotter import TracePlotter
 from datetime import datetime
 
 # Single tree
@@ -10,9 +11,9 @@ def simpleSingleTree():
     bSim = SimInterface()
     mctsHandler = MCTSHandler(
         bSim, 
-        plotBest=False, 
+        plotBest=True, 
         verbose=False)
-    mctsHandler.buildMultipleSingleTree(1000, 9000)
+    mctsHandler.buildSingleTree(9000)
     return(datetime.now()-start)
 
 # Periodic pruning
@@ -71,6 +72,14 @@ def fullNNSimple():
     mctsHandler.buildDescendingTree(nrOfTrees= 500, treeDepth= 18, loopsPrRoot= 200)
     return(datetime.now()-start)
 
+def zeabuzScenarioTester(scenarioName, path):
+    zSim = ZeabuzSimInterface(scenarioName, mode="Delay", route=True, steerablePaths = path)
+    mctsHandler = MCTSHandler(
+        zSim, 
+        verbose=False,
+        plotBest=True)
+    mctsHandler.buildDescendingTree(1, 1, 1, setInternalState=False)
+
 def zeabuzZoomState():
     start = datetime.now()
     zSim = ZeabuzSimInterface("over_turn_scenario", mode="Delay", route=True, steerablePaths = "turn_left")
@@ -105,27 +114,36 @@ def zeabuzPlotter(fileName):
     zSim = ZeabuzSimInterface("over_turn_scenario", mode="Noise")
     zSim.plotSavedPath(fileName, rate = 20, borders = True, noise=False)
 
-if __name__ == "__main__":
-    # simpleSingle = simpleSingleTree()
+def simpleMain():
+    simpleSingle = simpleSingleTree()
     # noNNTime = noNNSimple()
     # rolloutTime = rolloutNNSimple()
     # valueTime = valueNNSimple()
     # fullNNTime = fullNNSimple()
-    # print("simpleSingle", simpleSingle)
+    print("simpleSingle", simpleSingle)
     # print("noNNTime", noNNTime)
     # print("rolloutTime", rolloutTime)
     # print("valueTime", valueTime)
     # print("fullNNTime", fullNNTime) 
 
-    # ----- Zeabuz ------ #
+def simplePlot():
+    TP = TracePlotter()
+    TP.animate()
+
+def zeabuzMain():
     internalState = None
     zoomState = None
-    # internalState = zeabuzInternalState()
+    internalState = zeabuzInternalState()
     print("internalState", internalState)
     zoomState = zeabuzZoomState()
     print("internalState", internalState)
     print("zoomState", zoomState)
-    
 
-    # ------ Zeabuz plot ---- #
-    # ZP = zeabuzPlotter("zeabuzDelay2022-05-29_14-33-45")
+if __name__ == "__main__":
+    # zeabuzScenarioTester("delay_scenario2", "straight")
+    # zeabuzScenarioTester("delay_scenario3", "straight")
+    zeabuzScenarioTester("delay_scenario4", "turn_left_gradual")
+    # simpleMain()
+    # simplePlot()
+    # zeabuzMain()
+    # zeabuzPlotter("zeabuzDelay2022-05-29_14-33-45")

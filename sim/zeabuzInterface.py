@@ -197,7 +197,7 @@ class ZeabuzSimInterface:
             json.dump(data, f, indent=4)
         self.sim.save(self.fileName)
     
-    def plotSavedPath(self, fileName = None, rate = 20.0, borders = False, noise = True):  # TODO: Pull sim stats out to params.
+    def plotSavedPath(self, fileName = None, rate = 20.0, borders = True, noise = True):  # TODO: Pull sim stats out to params.
         if fileName is None:
             fileName = self.fileName
         simPlotter = ScenarioPlotter(fileName, rate = rate, plot_obs_est = noise, sp_vp = borders, metrics = False)

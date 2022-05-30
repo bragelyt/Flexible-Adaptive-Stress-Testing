@@ -1,0 +1,60 @@
+t0: 0.0
+T: 80.0
+dt: 0.1
+vessels:
+  milliAmpere:
+    class: 'MilliAmpere'
+    eta0: [10., 0., 0.]
+    nu0: [0., 0., 0.]
+    controller:
+      class: 'SpVpController'
+      par:
+        DpController:
+          kp: [200., 200., 800]
+          ki: [10., 10., 15.]
+          kd: [700., 700., 1600.]
+        path_wp: [[0, 0], [100, 0]]
+        sp_vp_rate: 0.2
+        start_time_delay: [20., 60., 120.]
+        tracking: 
+          noise: # Controlled # TODO: If None, noise is disabled
+            T_p: 1 #30
+            k_p: 1 #100
+            T_v: 1 #30
+            k_v: 1 #4.66
+        par:
+          v_max: 1.5
+          v_min: -0.2
+          cost_func:
+              v_des: 0.75
+              k_v_p: 10.
+              k_v_t: 1.
+              k_o_p_HPR: 100.
+              k_o_t_HPR: 5.
+              k_o_p_LPR: 10.
+              k_o_t_LPR: 0.
+          margins:
+              dynamic:
+                  ROC: {'lf': 20, 'ls': 10, 'la': 10, 'lp': 10}
+                  HPR: {'lf': 25, 'ls': 20, 'la': 15, 'lp': 15}
+                  LPR: {'lf': 40, 'ls': 30, 'la': 25, 'lp': 25}
+              'static':
+                  'ROC': 5
+                  'HPR': 10
+                  'LPR': 15
+          switch_path_factor: 0.8
+          switch_path_reduction: 20. #100.
+          max_initial_distance_to_path: 5
+          max_along_track_error: 5
+          max_cross_track_error: 3
+          low_vel_thr: 0.05
+          t_horizon: [-60, 600]
+  curveBoat:
+    class: 'FirstOrderVessel'
+    eta0: [0., 45., 0]
+    nu0: [1., 0., 0.]
+    time_const: [3, 5, 3]
+    controller:
+      class: 'SteerableVesselController'
+      k_yaw: 0.2
+      ref: [1., 0.]
