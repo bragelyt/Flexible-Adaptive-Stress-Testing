@@ -22,7 +22,7 @@ class ZeabuzSimInterface:
         self.resetSim()
         print("Boink")
         self.initialState = self.getInternalState()
-        # self.order = len(self.controllers)  # TODO: Could be nice to add more boats. Need to refractor action to a touple
+        # self.order = len(self.controllers)  # TODO: Could be nice to add more boats. Need to refractor action to a touple 
     
     def resetSim(self):
         self.d = math.inf
@@ -43,7 +43,6 @@ class ZeabuzSimInterface:
                         router = AdversarialRouter(controller, self.steerablePaths[key])
                         self.routers.append(router)
     
-    
     def getInternalState(self):
         internalState = {
             "xx": copy.deepcopy(self.sim.sim_state.xx),
@@ -60,21 +59,14 @@ class ZeabuzSimInterface:
         return internalState
     
     def setState(self, state) -> None:
-        start = datetime.now()
         self.resetSim()
-        # print("resetTime", datetime.now()-start)
-        # self.setInitialState()
-        # start = datetime.now()
         for actionSeed in state:
             self.step(actionSeed)
-        # print("zoomTime", datetime.now()-start)
     
     def setSmartState(self, state) -> None:
         self.setInternalState(self.initialState)
-        # start = datetime.now()
         for actionSeed in state:
             self.step(actionSeed)
-        # print("zoomTime", datetime.now()-start)
 
     def setInternalState(self, internalState):
         self.sim.sim_state.xx = internalState["xx"]
@@ -108,7 +100,7 @@ class ZeabuzSimInterface:
             return self.noiseStep(actionSeed) * 10
     
     def steerStep(self, actionSeed):
-        nu_d = [1., 0., self._getActionFromSeed(actionSeed)]
+        nu_d = [1., 0., self.   _getSteerActionFromSeed(actionSeed)]
         p = self._getTransitionProbability(actionSeed)
         for vessel, controller in self.controllers.items():
             controller.update_nu_d(nu_d)
@@ -203,7 +195,7 @@ class ZeabuzSimInterface:
         simPlotter = ScenarioPlotter(fileName, rate = rate, plot_obs_est = noise, sp_vp = borders, metrics = False)
         simPlotter.run()
 
-    def _getActionFromSeed(self, actionSeed):
+    def _getSteerActionFromSeed(self, actionSeed):
         return actionSeed - 0.5
 
     def _updateDistance(self):

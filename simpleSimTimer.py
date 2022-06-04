@@ -5,7 +5,7 @@ import random
 SI = SimInterface()
 
 start = datetime.now()
-for i in range(100000):
+for i in range(1000000):
     SI.resetSim()
     while not SI.isTerminal():
         SI.step(0.6)
