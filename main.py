@@ -39,7 +39,7 @@ def rolloutNNSimple():
         loadModel = False, 
         saveModel = True, 
         train = True)
-    mctsHandler.buildDescendingTree(nrOfTrees= 500, treeDepth= 18, loopsPrRoot= 200)
+    mctsHandler.buildDescendingTree(nrOfTrees= 50, treeDepth= 18, loopsPrRoot= 200)
     return(datetime.now()-start)
 
 def valueNNSimple():
@@ -54,7 +54,7 @@ def valueNNSimple():
         loadModel = False, 
         saveModel = True, 
         train = True)
-    mctsHandler.buildDescendingTree(nrOfTrees= 500, treeDepth= 18, loopsPrRoot= 200)
+    mctsHandler.buildDescendingTree(nrOfTrees= 50, treeDepth= 18, loopsPrRoot= 200)
     return(datetime.now()-start)
 
 def fullNNSimple():
@@ -115,15 +115,15 @@ def zeabuzPlotter(fileName):
     zSim.plotSavedPath(fileName, rate = 20, borders = True, noise=False)
 
 def simpleMain():
-    simpleSingle = simpleSingleTree()
+    # simpleSingle = simpleSingleTree()
     # noNNTime = noNNSimple()
-    # rolloutTime = rolloutNNSimple()
-    # valueTime = valueNNSimple()
+    rolloutTime = rolloutNNSimple()
+    valueTime = valueNNSimple()
     # fullNNTime = fullNNSimple()
-    print("simpleSingle", simpleSingle)
+    # print("simpleSingle", simpleSingle)
     # print("noNNTime", noNNTime)
-    # print("rolloutTime", rolloutTime)
-    # print("valueTime", valueTime)
+    print("rolloutTime", rolloutTime)
+    print("valueTime", valueTime)
     # print("fullNNTime", fullNNTime) 
 
 def simplePlot():
@@ -142,8 +142,8 @@ def zeabuzMain():
 if __name__ == "__main__":
     # zeabuzScenarioTester("delay_scenario2", "straight")
     # zeabuzScenarioTester("delay_scenario3", "straight")
-    zeabuzScenarioTester("delay_scenario4", "turn_left_gradual")
-    # simpleMain()
+    # zeabuzScenarioTester("delay_scenario4", "turn_left_gradual")
+    simpleMain()
     # simplePlot()
     # zeabuzMain()
     # zeabuzPlotter("zeabuzDelay2022-05-29_14-33-45")
