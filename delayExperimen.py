@@ -18,7 +18,7 @@ def setup1():
         loadModel = False, 
         saveModel = False, 
         train = True)
-    mctsHandler.buildDescendingTree(15, 22, 50, setInternalState=True)
+    mctsHandler.buildDescendingTree(15, 22, 50, setInternalState=False)
     return(datetime.now()-start)
     
 def setup2():
@@ -33,7 +33,7 @@ def setup2():
         loadModel = False, 
         saveModel = False, 
         train = True)
-    mctsHandler.buildDescendingTree(15, 22, 50, setInternalState=True)
+    mctsHandler.buildDescendingTree(15, 22, 50, setInternalState=False)
     return(datetime.now()-start)
 
 def setup3():
@@ -48,7 +48,7 @@ def setup3():
         loadModel = False, 
         saveModel = False, 
         train = True)
-    mctsHandler.buildDescendingTree(15, 22, 50, setInternalState=True)
+    mctsHandler.buildDescendingTree(15, 22, 50, setInternalState=False)
     return(datetime.now()-start)
 
 def setup4():
@@ -63,7 +63,7 @@ def setup4():
         loadModel = False, 
         saveModel = False, 
         train = True)
-    mctsHandler.buildDescendingTree(15, 22, 50, setInternalState=True)
+    mctsHandler.buildDescendingTree(15, 22, 50, setInternalState=False)
     return(datetime.now()-start)
 
 print("setup4", setup4())

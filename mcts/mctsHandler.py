@@ -30,7 +30,7 @@ class MCTSHandler:
 
     #TODO: Add funcitons for rerooting tree at most promising node. (Start wiht simple UCT and no exploration?)
 
-    def __init__(self, interface, verbose = True, plotBest = False, rolloutPolicy = None, valuePolicy = None, loadModel= False, saveModel = False, train = True) -> None:
+    def __init__(self, interface, verbose = True, plotBest = False, rolloutPolicy = None, valuePolicy = None, loadModel= False, saveModel = False, train = True, seeds = 1) -> None:
         self.loadModel = loadModel
         self.saveModel = saveModel
         self.train = train
@@ -44,7 +44,7 @@ class MCTSHandler:
         elif self.simInterface.__class__.__name__ == "SimInterface":
             self.interface = "simple"
             self.verboseInterval = 1000
-        self.mcts = MCTS(rolloutPolicy, valuePolicy, self.interface if loadModel else None)
+        self.mcts = MCTS(rolloutPolicy, valuePolicy, self.interface if loadModel else None, seeds = seeds)
         self.plotBest = plotBest
         self.verbose = verbose
         if plotBest:
@@ -141,7 +141,7 @@ class MCTSHandler:
                     json.dump(self.stats, f, indent=4)
         if self.plotBest:
             self.plotResult()
-        print([round(x,4) for x in self.bestActionSeedTrace])
+        # print([round(x,4) for x in self.bestActionSeedTrace])
         print("-----", cumLoopTime)
         print(simRunTimes)
         # return

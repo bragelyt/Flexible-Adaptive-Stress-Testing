@@ -100,17 +100,19 @@ class ZeabuzSimInterface:
             return self.noiseStep(actionSeed) * 10
     
     def steerStep(self, actionSeed):
-        nu_d = [1., 0., self.   _getSteerActionFromSeed(actionSeed)]
-        p = self._getTransitionProbability(actionSeed)
-        for vessel, controller in self.controllers.items():
-            controller.update_nu_d(nu_d)
+        p = math.log(self._getTransitionProbability(actionSeed))
+        nu_ds = []
+        for seed in actionSeed:
+            nu_ds.append([1., 0., self. _getSteerActionFromSeed(seed)])
+        for i, controller in enumerate(self.controllers.values()):
+            controller.update_nu_d(nu_ds[i])
         for i in range(10):
             self.terminal = not self.sim.step()
             self._updateDistance()
             if self.terminal:
                 break
         self.lastActionSeed = actionSeed
-        return math.log(p)
+        return p
     
     def delayStep(self, actionSeed):
         p = self._getTransitionProbability(actionSeed)
@@ -195,8 +197,8 @@ class ZeabuzSimInterface:
         simPlotter = ScenarioPlotter(fileName, rate = rate, plot_obs_est = noise, sp_vp = borders, metrics = False)
         simPlotter.run()
 
-    def _getSteerActionFromSeed(self, actionSeed):
-        return actionSeed - 0.5
+    def _getSteerActionFromSeed(self, seed):
+        return seed - 0.5
 
     def _updateDistance(self):
         xx = self.sim.sim_state.xx[-1]
@@ -225,10 +227,13 @@ class ZeabuzSimInterface:
             self.terminal = True
 
     def _getTransitionProbability(self, action):
+        prob = 0
         if self.lastActionSeed is None:
             return 1
         else:
-            return 1-abs(action - self.lastActionSeed)  # TODO: Check if this is correct
+            for i in range(len(action)):
+                prob += 1-abs(action[i] - self.lastActionSeed[i])  # TODO: Check if this is correct
+        return prob/len(action)
 
     def _euclideanD(self, x1, y1, x2, y2):
         return(math.sqrt((x1-x2)**2 + (y1-y2)**2))

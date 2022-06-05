@@ -12,7 +12,7 @@ class TreeNode:
         self.timesVisited = 0  # Initiates only after visit so should be one
         self.evaluation = 0
         self.stepReward = None
-        self.children : Dict[int, TreeNode] = {}  # SeedAction, node
+        self.children = {}  # SeedAction, node
         self.stateRepresentation = None
         if self.action == None:
             self.stepReward = 0

@@ -25,7 +25,8 @@ from models.saveLoadAgent import SaveNetwork, LoadModel
 
 class MCTS:  
     
-    def __init__(self, rolloutType, valuePolicy, interface) -> None:
+    def __init__(self, rolloutType, valuePolicy, interface, seeds) -> None:
+        self.seeds = seeds
         self.rolloutType = rolloutType
         self.valuePolicy = valuePolicy
         self.reset()
@@ -74,7 +75,7 @@ class MCTS:
     
     def reset(self):
         # self.trainingBatch = []  # REVIEW: Fucker dette ting opp?
-        self.rootNode = TreeNode(None, None)  # NOTE: Might cause problems with None action, but it is correct. T=0
+        self.rootNode = TreeNode(tuple([None]*self.seeds), None)  # NOTE: Might cause problems with None action, but it is correct. T=0
         self.originalRoot = self.rootNode
         self.rootNode.visitNode()
         self.currentNode = self.rootNode
@@ -84,9 +85,10 @@ class MCTS:
         return self.rootNode
 
     def addRandomChild(self) -> TreeNode:
-        seedAction = random.random()
-        newBornAction = seedAction
-        return self.currentNode.addChild(newBornAction)
+        seedAction = []
+        for i in range(self.seeds):
+            seedAction.append(random.random())
+        return self.currentNode.addChild(tuple(seedAction))
 
     def isAtLeafNode(self) -> bool:
         return self.leafNode
@@ -109,7 +111,10 @@ class MCTS:
         
 
     def rollout(self) -> double:
-        return random.random()
+        seedAction = []
+        for i in range(self.seeds):
+            seedAction.append(random.random())
+        return tuple(seedAction)
     
     def getRolloutPolicy(self, state):  # REVIEW: Test denne
         # if random.random() > self.rolloutEpsilon:
