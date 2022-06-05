@@ -109,10 +109,10 @@ class ZeabuzSimInterface:
     
     def steerStep(self, actionSeed):
         nu_d = [1., 0., self._getActionFromSeed(actionSeed)]
-        p = self._getTransitionProbability(actionSeed)
+        p = self._getTransitionProbability(actionSeed)*0.75
         for vessel, controller in self.controllers.items():
             controller.update_nu_d(nu_d)
-        for i in range(10):
+        for i in range(30):
             self.terminal = not self.sim.step()
             self._updateDistance()
             if self.terminal:
