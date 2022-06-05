@@ -75,7 +75,7 @@ class MCTSHandler:
             with open("multipleSingleTrees.json", 'w') as f:
                 json.dump(stats, f, indent=4)
 
-    def buildDescendingTree(self, nrOfTrees, treeDepth, loopsPrRoot, setInternalState = True) -> List[double]:  # MCTS should keep track of root
+    def buildDescendingTree(self, nrOfTrees, treeDepth, loopsPrRoot, setInternalState = False) -> List[double]:  # MCTS should keep track of root
         self.maxReward = -math.inf
         self.bestActionSeedTrace = None
         self.stats = {}
@@ -94,36 +94,15 @@ class MCTSHandler:
                 maxReward = -math.inf
                 cumReward = 0
                 self.simInterface.setState(simState)
-                if setInternalState:
-                    internalState = self.simInterface.getInternalState()
-                    xxLen = len(internalState["xx"])
                 isBest = False
                 for j in range(loopsPrRoot):
-                    if i not in simRunTimes.keys():
-                        simRunTimes[i] = []
-                    startLoop = datetime.now()
+                    self.simInterface.setState(simState)
                     totalReward, actionSeedTrace = self.loop()
-                    # print(i, "LoopTime", datetime.now()-startLoop)
-                    # print(totalReward, len(actionSeedTrace))
-                    startZoom = datetime.now()
                     if totalReward > maxReward:
                         maxReward = totalReward
                         bestPath = actionSeedTrace
                     cumReward += totalReward
                     isBest = self.saveBest(totalReward, actionSeedTrace, j + loopsPrRoot*i) or isBest
-                    if setInternalState:
-                        if len(internalState["xx"]) != xxLen:
-                            out = ""
-                            for t in internalState["t"]:
-                                out += (str(round(t,1))) + ", "
-                            print(out)
-                        self.simInterface.setInternalState(internalState)
-                    else:
-                        self.simInterface.setState(simState)
-                    # print(i, "ZoomTime", datetime.now()-startZoom)
-                    cumLoopTime += datetime.now()-startLoop
-                    # print(i, (datetime.now()-startLoop).total_seconds())
-                    simRunTimes[i].append((datetime.now()-startLoop).total_seconds())
                 if self.rolloutPolicyType is not None:
                     if self.train:
                         self.simInterface.setState(simState)
@@ -134,7 +113,6 @@ class MCTSHandler:
                     break
                 else:
                     simState.append(nextAction)
-                # print(simState)
                 if self.verbose:
                     if self.rolloutPolicyType is not None:
                         rootPrintNN(i, maxReward, bestPath, cumReward / loopsPrRoot, self.simInterface.getStateRepresentation()[0], self.mcts.rolloutPolicy.getPrediction(self.simInterface.getStateRepresentation()), isBest)
