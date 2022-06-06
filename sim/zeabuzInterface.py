@@ -224,6 +224,9 @@ class ZeabuzSimInterface:
             # print("Reached dock")
             self.terminal = True
 
+    def _getActionFromSeed(self, seedAction):
+        return seedAction-0.5
+
     def _getTransitionProbability(self, action):
         if self.lastActionSeed is None:
             return 1
